@@ -8,7 +8,7 @@ import "./App.css";
 // ⚠️ CHANGE THIS TO YOUR NGROK URL WHEN TESTING WITH FRIEND ⚠️
 // For now (Localhost): "http://localhost:3001"
 // For Friend (Ngrok): "https://your-server.ngrok-free.app"
-const SOCKET_URL = "https://localhost:3001"; 
+const SOCKET_URL = "http://localhost:3001"; 
 
 // 🌟 Apply the fix: Set worker source to the imported URL
 GlobalWorkerOptions.workerSrc = pdfWorker;
