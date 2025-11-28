@@ -1,0 +1,24 @@
+Dependencies
+
+node_modules/
+client/node_modules/
+server/node_modules/
+
+Build files
+
+dist/
+build/
+
+Environment variables
+
+.env
+
+Uploads (Don't upload student files to GitHub)
+
+server/uploads/*
+!server/uploads/.gitkeep
+
+OS generated files
+
+.DS_Store
+Thumbs.db
