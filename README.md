@@ -1,32 +1,32 @@
-🎓 LightLearn 2G: The Low-Bandwidth LMS
+🎓 LightLearn 2G: The Ultra-Low Bandwidth LMS
 
-LightLearn is a specialized Learning Management System (LMS) engineered to deliver real-time education on extremely slow internet connections (2G/EDGE speeds ~15-20 kbps).
+LightLearn is a specialized Learning Management System (LMS) engineered to deliver real-time, interactive education on extremely slow internet connections (2G/EDGE speeds ~15-20 kbps).
 
-Unlike Zoom or Google Meet which require high-speed 4G/WiFi, LightLearn uses novel compression techniques to ensure rural students never miss a class.
+Unlike standard video conferencing tools (Zoom, Google Meet) which require high-speed 4G/WiFi, LightLearn uses novel compression techniques to ensure rural students never miss a class due to poor connectivity.
 
 🚀 Key Features
 
 1. 📡 2G-Optimized Live Class
 
-Vector Whiteboard: Instead of streaming video, we stream mathematical coordinates (X, Y points). This uses ~0.5 kbps bandwidth.
+Vector Whiteboard: Instead of streaming a video of the screen, LightLearn streams mathematical coordinates (X, Y points). This reduces bandwidth usage to ~0.5 kbps while maintaining infinite resolution.
 
-Stop-Motion Video: Teacher video is sent as a series of 1 FPS snapshots (~4KB each), providing visual presence without the heavy data cost of streaming.
+Stop-Motion Video: Teacher video is transmitted as a series of 1 FPS snapshots (~4KB each). This provides visual presence without the heavy data cost of continuous video streaming.
 
-Walkie-Talkie Audio: Audio is recorded in 1-second chunks and sent as raw binary data via a server relay. This guarantees zero packet loss even on unstable networks.
+Walkie-Talkie Audio: Audio is recorded in 1-second chunks and sent as raw binary data via a server relay. This robust "store-and-forward" mechanism guarantees zero packet loss, ensuring clear voice even on unstable networks.
 
 2. 📚 Interactive Learning Tools
 
-Smart PDF Sharing: Teachers upload PDFs which are converted to lightweight images locally before sending. Students download single slides on demand.
+Smart PDF Sharing: Teachers upload PDFs which are converted to lightweight images locally before sending. Students download single slides on demand, saving massive amounts of data.
 
-Low-Data Quizzes: Teachers can create and launch pop quizzes instantly. The entire interaction uses less data than a single SMS.
+Low-Data Quizzes: Teachers can create and launch pop quizzes instantly. The entire interaction uses less data than a single SMS text message.
 
-Resource Hub: A dedicated area for students to download class notes and audio replays.
+Resource Hub: A dedicated area for students to download class notes and access audio replays of past lectures.
 
-3. 👥 Role-Based Access
+3. 👥 Role-Based Access Control
 
-Teacher Mode: Full control to draw, upload slides, create quizzes, and unlock the board for students.
+Teacher Mode: Full administrative control to draw on the board, upload slides, create quizzes, and manage permissions (e.g., unlocking the board for students).
 
-Student Mode: Viewer-only by default to prevent chaos. Can raise hand (chat) or draw when permission is granted.
+Student Mode: optimized for viewing. Students can raise their hand (chat), answer quizzes, and draw on the board only when permission is explicitly granted by the teacher.
 
 🛠️ Tech Stack
 
@@ -38,11 +38,13 @@ Real-time Layer: WebSocket Relay (Custom binary protocol for audio/video)
 
 PDF Engine: PDF.js (Mozilla)
 
+Styling: CSS3 (Responsive, Dark Mode)
+
 🏃‍♂️ How to Run Locally
 
 Prerequisites
 
-Node.js installed on your machine.
+Node.js (v16 or higher) installed on your machine.
 
 1. Clone the Repository
 
@@ -51,6 +53,8 @@ cd light_learn
 
 
 2. Setup the Server
+
+Open a terminal in the root directory:
 
 cd server
 npm install
@@ -61,7 +65,7 @@ The server will start on port 3001.
 
 3. Setup the Client
 
-Open a new terminal:
+Open a new terminal window in the root directory:
 
 cd client
 npm install
@@ -71,21 +75,21 @@ npm run preview
 
 The app will run on http://localhost:4173.
 
-4. Testing with 2G (Optional)
+4. Testing 2G Conditions (Optional)
 
-To simulate the real-world experience:
+To simulate the real-world experience of a rural user:
 
 Open Chrome DevTools (F12).
 
 Go to the Network tab.
 
-Under "Throttling", select "Slow 3G" or create a custom profile for 20kbps.
+Under the "No throttling" dropdown, select "Slow 3G" or create a custom profile for 20kbps.
 
-The app will continue to function smoothly!
+Interact with the app—you will see it continues to function smoothly!
 
 🤝 Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request for any enhancements.
+Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
 
 📜 License
 
