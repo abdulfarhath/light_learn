@@ -1,0 +1,85 @@
+✅ Core Features (Low-Bandwidth Learning System)
+🎧 1. Optimized Audio-First Live Classes
+Prioritize clear audio over video (audio even if video drops).
+Auto-adjust quality based on bandwidth.
+Option to voice-only mode.
+🖼️ 2. Compressed Visual Content
+Slide + Audio format instead of full video streaming.
+Images auto-compressed on upload.
+Support static blackboard/canvas snapshots instead of continuous video.
+🔁 3. Resilient Connectivity Handling
+Auto-reconnect without losing session.
+Lecture keeps recording even if students disconnect.
+Students get a sync button to jump to the current timestamp.
+⬇️ 4. Lightweight Offline Downloads
+Recordings saved as compressed audio + slides, not heavy videos.
+Ability to download during off-peak hours (schedule download).
+File size display + low data mode recommendations.
+
+🧑‍🏫 Faculty-Centric Features
+🎙️ 5. Simple Recording from Anywhere
+Teachers can record using:
+Phone mic + slides
+Just voice + PDF upload + annotations
+No external software, no complex setup.
+✍️ 6. Easy Slide Annotation Tools
+Draw, highlight, add text on slides.
+Works even on phones with finger touch.
+⚡ 7. One-Click Class Start
+Single button to start live class.
+Automatic save → upload → compress.
+
+📱 Student-Centric Features
+📱 8. Works on Entry-Level Phones
+Low storage usage, low RAM requirements.
+Load slides sequentially, not all at once.
+🧠 9. Lightweight Quizzes & Polls
+Quizzes available both during and after class.
+Works without high-speed internet.
+Minimal text-only mode available.
+💬 10. Discussion Board for Low Connectivity
+Asynchronous doubts (students ask anytime).
+Audio note doubt + small image upload supported.
+
+🌐 Network & Data Optimization Features
+📶 11. Adaptive Bandwidth Control
+Auto switch: Audio → Slides → Static Visuals.
+Toggle video manually.
+🗂️ 12. Data Usage Monitor
+Shows MB spent per session.
+Lets users cap data usage.
+💾 13. Caching for Re-Access
+Recently viewed content opens even without internet.
+
+🔒 Sustainability & Management Features
+🆓 14. No Costly Licenses / Open-Source Stack
+Use open codecs, free frameworks.
+🧾 15. Cloud + Local Storage Hybrid
+Colleges with weak network can host locally.
+Cloud backup when network available.
+🎓 16. Institute/Teacher Dashboard
+Track attendance even in low connectivity.
+Reports for student engagement & quiz performance.
+
+🌟 Bonus Features (If time permits)
+AI voice clarity enhancer (noise reduction).
+Local server installable on Raspberry Pi for campuses.
+SMS alerts for class schedule and recordings availability.
+
+🎯 In Summary
+Need AddressedFeature
+Low bandwidth
+Audio-first streaming, compressed visuals
+Connectivity issues
+Auto-reconnect, sync button
+Limited storage/data
+Lightweight downloads, caching
+Rural student devices
+Works on entry-level phones
+Teacher simple usage
+One-click record + easy annotations
+Engagement
+Low-data quizzes, polls, discussion board
+Sustainability
+Open-source, cloud+local hybrid
+
