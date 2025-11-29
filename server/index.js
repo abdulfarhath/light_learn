@@ -2,9 +2,24 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
+require('dotenv').config();
 
 const app = express();
 app.use(cors());
+app.use(express.json()); // Parse JSON request bodies
+
+// Import authentication routes
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+
+// Mount authentication routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', message: 'Server is running' });
+});
 
 const server = http.createServer(app);
 
@@ -43,13 +58,13 @@ io.on("connection", (socket) => {
   socket.on("submit_answer", (data) => socket.to(data.room).emit("receive_answer", data));
 
   // --- 🆕 RESOURCE SYSTEM ---
-  
+
   // 1. Upload (Teacher)
   socket.on("upload_resource", (fileData) => {
     // fileData = { name, type, size, data }
     const newFile = { id: Date.now(), ...fileData };
     resources.push(newFile);
-    
+
     // Broadcast ONLY metadata (lightweight) to everyone
     const meta = { id: newFile.id, name: newFile.name, type: newFile.type, size: newFile.size };
     io.emit("new_resource_available", meta);
@@ -69,4 +84,5 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(3001, () => console.log("SERVER RUNNING ON 3001"));
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => console.log(`🚀 SERVER RUNNING ON PORT ${PORT}`));
