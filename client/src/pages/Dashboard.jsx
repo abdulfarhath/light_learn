@@ -3,8 +3,8 @@ import io from "socket.io-client";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import "../App.css";
-import Navbar from "../components/Navbar";
-import { useAuth } from "../context/AuthContext";
+import Navbar from "../shared/components/Navbar";
+import { useAuth } from "../features/auth";
 
 const SOCKET_URL = "http://localhost:3001";
 
