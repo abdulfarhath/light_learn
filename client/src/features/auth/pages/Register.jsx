@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../features/auth';
+import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
-const Login = () => {
+const Register = () => {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { register } = useAuth();
 
     const [formData, setFormData] = useState({
         email: '',
         password: '',
+        full_name: '',
+        role: 'student',
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -24,9 +26,15 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        setLoading(true);
 
-        const result = await login(formData.email, formData.password);
+        // Basic validation
+        if (formData.password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return;
+        }
+
+        setLoading(true);
+        const result = await register(formData);
 
         if (result.success) {
             navigate('/dashboard');
@@ -41,10 +49,24 @@ const Login = () => {
             <div className="auth-card">
                 <div className="auth-header">
                     <h1>🎓 LightLearn</h1>
-                    <p>Welcome back! Please login to continue.</p>
+                    <p>Create your account to get started.</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="auth-form">
+                    <div className="form-group">
+                        <label htmlFor="full_name">Full Name</label>
+                        <input
+                            type="text"
+                            id="full_name"
+                            name="full_name"
+                            value={formData.full_name}
+                            onChange={handleChange}
+                            required
+                            placeholder="Enter your full name"
+                            autoComplete="name"
+                        />
+                    </div>
+
                     <div className="form-group">
                         <label htmlFor="email">Email</label>
                         <input
@@ -68,24 +90,38 @@ const Login = () => {
                             value={formData.password}
                             onChange={handleChange}
                             required
-                            placeholder="Enter your password"
-                            autoComplete="current-password"
+                            placeholder="At least 6 characters"
+                            autoComplete="new-password"
                         />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="role">I am a...</label>
+                        <select
+                            id="role"
+                            name="role"
+                            value={formData.role}
+                            onChange={handleChange}
+                            required
+                        >
+                            <option value="student">Student</option>
+                            <option value="teacher">Teacher</option>
+                        </select>
                     </div>
 
                     {error && <div className="error-message">{error}</div>}
 
                     <button type="submit" className="auth-button" disabled={loading}>
-                        {loading ? 'Logging in...' : 'Login'}
+                        {loading ? 'Creating account...' : 'Register'}
                     </button>
                 </form>
 
                 <div className="auth-footer">
-                    Don't have an account? <Link to="/register">Register here</Link>
+                    Already have an account? <Link to="/login">Login here</Link>
                 </div>
             </div>
         </div>
     );
 };
 
-export default Login;
+export default Register;

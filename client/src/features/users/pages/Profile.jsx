@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../features/auth';
-import Navbar from '../shared/components/Navbar';
-import { authAPI } from '../features/auth/services/authAPI';
+import { useAuth } from '../../auth';
+import { userAPI } from '../services/userAPI';
+import Navbar from '../../../shared/components/Navbar';
+import './Profile.css';
 import './Profile.css';
 
 const Profile = () => {
@@ -47,7 +48,7 @@ const Profile = () => {
                             {displayUser?.full_name?.charAt(0).toUpperCase()}
                         </div>
                         <h1>{displayUser?.full_name}</h1>
-                        <div className={`profile-role ${displayUser?.role}`}>
+                        <div className={`profile - role ${displayUser?.role} `}>
                             {displayUser?.role === 'teacher' ? '👨‍🏫 Teacher' : '👨‍🎓 Student'}
                         </div>
                     </div>
@@ -69,7 +70,7 @@ const Profile = () => {
                             <div className="detail-item">
                                 <span className="detail-label">Role</span>
                                 <span className="detail-value">
-                                    <span className={`role-badge ${displayUser?.role}`}>
+                                    <span className={`role - badge ${displayUser?.role} `}>
                                         {displayUser?.role?.charAt(0).toUpperCase() + displayUser?.role?.slice(1)}
                                     </span>
                                 </span>

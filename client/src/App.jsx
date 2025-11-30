@@ -1,11 +1,11 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import { AuthProvider } from './features/auth';
+import { ProtectedRoute } from './shared';
+import { Login, Register } from './features/auth';
+import { Profile } from './features/users';
+import { Classes } from './features/classes';
 import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
 
 function App() {
     return (
@@ -30,6 +30,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <Profile />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/classes"
+                        element={
+                            <ProtectedRoute>
+                                <Classes />
                             </ProtectedRoute>
                         }
                     />
