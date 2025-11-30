@@ -6,6 +6,7 @@ import { Login, Register } from './features/auth';
 import { Profile } from './features/users';
 import { Classes } from './features/classes';
 import Dashboard from './pages/Dashboard';
+import LiveSession from './pages/LiveSession';
 
 function App() {
     return (
@@ -38,6 +39,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <Classes />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/live-session"
+                        element={
+                            <ProtectedRoute>
+                                <LiveSession />
                             </ProtectedRoute>
                         }
                     />
