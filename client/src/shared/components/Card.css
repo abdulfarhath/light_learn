@@ -1,0 +1,49 @@
+/* Card Component Styles */
+
+.card {
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-xl);
+    transition: all var(--transition-base);
+}
+
+.card-clickable {
+    cursor: pointer;
+}
+
+.card-clickable:active {
+    transform: scale(0.98);
+}
+
+/* Card Header */
+.card-header {
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--divider);
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+}
+
+.card-header p {
+    margin: var(--spacing-xs) 0 0 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+}
+
+/* Card Body */
+.card-body {
+    margin-bottom: var(--spacing-md);
+}
+
+/* Card Footer */
+.card-footer {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--divider);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}

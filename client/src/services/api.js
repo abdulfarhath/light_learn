@@ -28,11 +28,14 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
             // Token expired or invalid - clear storage
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            window.location.href = '/login';
+            // Only redirect if not already on login page
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }
@@ -70,6 +73,43 @@ export const userAPI = {
 
     getStudents: async () => {
         const response = await api.get('/users/students');
+        return response.data;
+    },
+};
+
+// Class API endpoints
+export const classAPI = {
+    createClass: async (className) => {
+        const response = await api.post('/classes/create', { class_name: className });
+        return response.data;
+    },
+
+    joinClass: async (classCode) => {
+        const response = await api.post('/classes/join', { class_code: classCode });
+        return response.data;
+    },
+
+    getMyClasses: async (role) => {
+        const endpoint = role === 'teacher' ? '/classes/my-classes' : '/classes/enrolled';
+        const response = await api.get(endpoint);
+        return response.data;
+    },
+
+    getClassDetails: async (classId) => {
+        const response = await api.get(`/classes/${classId}`);
+        return response.data;
+    },
+
+    getClassStudents: async (classId) => {
+        const response = await api.get(`/classes/${classId}/students`);
+        return response.data;
+    },
+};
+
+// Health check
+export const healthAPI = {
+    check: async () => {
+        const response = await api.get('/health');
         return response.data;
     },
 };
