@@ -1,5 +1,4 @@
 import React from 'react';
-import './Card.css';
 
 const Card = ({
     children,
@@ -8,16 +7,16 @@ const Card = ({
     onClick,
     ...props
 }) => {
-    const classNames = [
-        'card',
-        'glass',
-        hover && 'glass-hover',
-        onClick && 'card-clickable',
-        className
-    ].filter(Boolean).join(' ');
+    const baseClasses = "bg-bg-panel border border-border rounded-2xl p-6 shadow-lg transition-all duration-300";
+    const hoverClasses = hover ? "hover:bg-bg-hover hover:border-primary/30 hover:-translate-y-1 hover:shadow-xl" : "";
+    const clickableClasses = onClick ? "cursor-pointer" : "";
 
     return (
-        <div className={classNames} onClick={onClick} {...props}>
+        <div
+            className={`${baseClasses} ${hoverClasses} ${clickableClasses} ${className}`}
+            onClick={onClick}
+            {...props}
+        >
             {children}
         </div>
     );

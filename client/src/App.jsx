@@ -1,23 +1,26 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './features/auth';
+
 import { ProtectedRoute } from './shared';
+import Layout from './shared/components/Layout';
 import { Login, Register } from './features/auth';
 import { Profile } from './features/users';
 import { Classes } from './features/classes';
 import Dashboard from './pages/Dashboard';
 import LiveSession from './pages/LiveSession';
 
+import Schedule from './pages/Schedule';
+
 function App() {
     return (
-        <AuthProvider>
-            <BrowserRouter>
-                <Routes>
-                    {/* Public routes */}
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
+        <BrowserRouter>
+            <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
 
-                    {/* Protected routes */}
+                {/* Protected routes with Sidebar Layout */}
+                <Route element={<Layout />}>
                     <Route
                         path="/dashboard"
                         element={
@@ -43,6 +46,14 @@ function App() {
                         }
                     />
                     <Route
+                        path="/schedule"
+                        element={
+                            <ProtectedRoute>
+                                <Schedule />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
                         path="/live-session"
                         element={
                             <ProtectedRoute>
@@ -50,13 +61,13 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
+                </Route>
 
-                    {/* Default redirect */}
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                </Routes>
-            </BrowserRouter>
-        </AuthProvider>
+                {/* Default redirect */}
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+        </BrowserRouter>
     );
 }
 
