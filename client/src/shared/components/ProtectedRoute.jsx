@@ -1,28 +1,21 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../../features/auth';
+import useAuthStore from '../../stores/authStore';
 
 
 const ProtectedRoute = ({ children }) => {
-    const { isAuthenticated, loading } = useAuth();
+    const { token, loading } = useAuthStore();
+    console.log('ProtectedRoute - Token:', token ? 'Present' : 'Missing', 'Loading:', loading);
 
     if (loading) {
         return (
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '100vh',
-                background: '#0a0a0a',
-                color: 'white',
-                fontSize: '1.2rem'
-            }}>
-                Loading...
+            <div className="flex items-center justify-center min-h-screen bg-bg-dark text-white text-xl">
+                <div className="spinner"></div>
             </div>
         );
     }
 
-    return isAuthenticated ? children : <Navigate to="/login" replace />;
+    return token ? children : <Navigate to="/login" replace />;
 };
 
 export default ProtectedRoute;

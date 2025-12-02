@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../features/auth';
-import Navbar from '../shared/components/Navbar';
+import useAuthStore from '../stores/authStore';
 import StatCard from '../shared/components/StatCard';
 import Card from '../shared/components/Card';
 import Button from '../shared/components/Button';
 import { classAPI } from '../services/api';
-import './Dashboard.css';
 
 const NewDashboard = () => {
-    const { user } = useAuth();
+    const { user } = useAuthStore();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
@@ -57,72 +55,79 @@ const NewDashboard = () => {
 
     const quickActions = user?.role === 'teacher' ? [
         {
-            title: '🎥 Start Live Session',
+            title: 'Start Live Session',
             description: 'Video, Whiteboard, Chat & More',
             icon: '📡',
             action: () => navigate('/live-session'),
-            color: 'primary'
+            color: 'primary',
+            hoverBorder: 'hover:border-primary'
         },
         {
             title: 'Create Class',
             description: 'Start a new class',
             icon: '➕',
             action: () => navigate('/classes'),
-            color: 'success'
+            color: 'success',
+            hoverBorder: 'hover:border-success'
         },
         {
             title: 'View Classes',
             description: 'Manage your classes',
             icon: '🏫',
             action: () => navigate('/classes'),
-            color: 'warning'
+            color: 'warning',
+            hoverBorder: 'hover:border-warning'
         }
     ] : [
         {
-            title: '🎥 Join Live Session',
+            title: 'Join Live Session',
             description: 'Video, Whiteboard, Chat & More',
             icon: '📡',
             action: () => navigate('/live-session'),
-            color: 'primary'
+            color: 'primary',
+            hoverBorder: 'hover:border-primary'
         },
         {
             title: 'Join Class',
             description: 'Enter class code',
             icon: '🚪',
             action: () => navigate('/classes'),
-            color: 'success'
+            color: 'success',
+            hoverBorder: 'hover:border-success'
         },
         {
             title: 'My Classes',
             description: 'View enrolled classes',
             icon: '📚',
             action: () => navigate('/classes'),
-            color: 'warning'
+            color: 'warning',
+            hoverBorder: 'hover:border-warning'
         }
     ];
 
     return (
-        <>
-            <Navbar />
-            <div className="dashboard">
-                <div className="dashboard-container">
-                    {/* Welcome Section */}
-                    <div className="welcome-section animate-slide-up">
-                        <div className="welcome-content">
-                            <h1 className="welcome-title">
-                                Welcome back, <span className="gradient-text">{user?.full_name}</span>! 👋
+        <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 max-w-7xl mx-auto w-full no-scrollbar">
+            <div className="flex flex-col gap-6">
+                {/* Welcome Section */}
+                <div className="bg-gradient-to-r from-primary to-accent p-10 rounded-2xl text-center text-white shadow-lg animate-slide-up relative overflow-hidden">
+                    <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]"></div>
+                    <div className="relative z-10">
+                        <div className="mb-6">
+                            <h1 className="text-3xl font-bold mb-2">
+                                Welcome back, <span className="text-white">{user?.full_name}</span>! 👋
                             </h1>
-                            <p className="welcome-subtitle">
+                            <p className="text-lg opacity-90 max-w-2xl mx-auto">
                                 {user?.role === 'teacher'
                                     ? "Ready to inspire and educate your students today?"
                                     : "Ready to continue your learning journey?"}
                             </p>
                         </div>
-                        <div className="welcome-actions" style={{ display: 'flex', gap: 'var(--spacing-md)', flexWrap: 'wrap' }}>
+                        <div className="flex gap-4 flex-wrap justify-center">
                             <Button
                                 variant="primary"
                                 size="large"
                                 onClick={() => navigate('/live-session')}
+                                className="bg-white text-primary hover:bg-gray-100 border-none shadow-xl"
                             >
                                 🎥 {user?.role === 'teacher' ? 'Start Live Session' : 'Join Live Session'}
                             </Button>
@@ -130,185 +135,206 @@ const NewDashboard = () => {
                                 variant="secondary"
                                 size="large"
                                 onClick={() => navigate('/classes')}
+                                className="bg-white/10 backdrop-blur-md border border-white/30 text-white hover:bg-white/20"
                             >
                                 {user?.role === 'teacher' ? '🎓 My Classes' : '📚 Browse Classes'}
                             </Button>
                         </div>
                     </div>
+                </div>
 
-                    {/* Stats Grid */}
-                    <div className="stats-grid animate-fade-in">
-                        {user?.role === 'teacher' ? (
-                            <>
-                                <StatCard
-                                    title="Total Classes"
-                                    value={stats.totalClasses}
-                                    icon="🏫"
-                                    color="primary"
-                                    loading={loading}
-                                />
-                                <StatCard
-                                    title="Total Students"
-                                    value={stats.totalStudents}
-                                    icon="👥"
-                                    color="success"
-                                    loading={loading}
-                                />
-                                <StatCard
-                                    title="Active Sessions"
-                                    value={stats.activeSessions}
-                                    icon="📡"
-                                    color="warning"
-                                    loading={loading}
-                                />
-                                <StatCard
-                                    title="Resources Shared"
-                                    value={stats.completedActivities}
-                                    icon="📄"
-                                    color="danger"
-                                    loading={loading}
-                                />
-                            </>
-                        ) : (
-                            <>
-                                <StatCard
-                                    title="Enrolled Classes"
-                                    value={stats.totalClasses}
-                                    icon="📚"
-                                    color="primary"
-                                    loading={loading}
-                                />
-                                <StatCard
-                                    title="Attended Sessions"
-                                    value={stats.activeSessions}
-                                    icon="✅"
-                                    color="success"
-                                    loading={loading}
-                                />
-                                <StatCard
-                                    title="Quizzes Completed"
-                                    value={stats.completedActivities}
-                                    icon="🎯"
-                                    color="warning"
-                                    loading={loading}
-                                />
-                                <StatCard
-                                    title="Resources Downloaded"
-                                    value="0"
-                                    icon="📥"
-                                    color="danger"
-                                    loading={loading}
-                                />
-                            </>
-                        )}
-                    </div>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
+                    {user?.role === 'teacher' ? (
+                        <>
+                            <StatCard
+                                title="Total Classes"
+                                value={stats.totalClasses}
+                                icon="🏫"
+                                color="primary"
+                                loading={loading}
+                            />
+                            <StatCard
+                                title="Total Students"
+                                value={stats.totalStudents}
+                                icon="👥"
+                                color="success"
+                                loading={loading}
+                            />
+                            <StatCard
+                                title="Active Sessions"
+                                value={stats.activeSessions}
+                                icon="📡"
+                                color="warning"
+                                loading={loading}
+                            />
+                            <StatCard
+                                title="Resources Shared"
+                                value={stats.completedActivities}
+                                icon="📄"
+                                color="danger"
+                                loading={loading}
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <StatCard
+                                title="Enrolled Classes"
+                                value={stats.totalClasses}
+                                icon="📚"
+                                color="primary"
+                                loading={loading}
+                            />
+                            <StatCard
+                                title="Attended Sessions"
+                                value={stats.activeSessions}
+                                icon="✅"
+                                color="success"
+                                loading={loading}
+                            />
+                            <StatCard
+                                title="Quizzes Completed"
+                                value={stats.completedActivities}
+                                icon="🎯"
+                                color="warning"
+                                loading={loading}
+                            />
+                            <StatCard
+                                title="Resources Downloaded"
+                                value="0"
+                                icon="📥"
+                                color="danger"
+                                loading={loading}
+                            />
+                        </>
+                    )}
+                </div>
 
-                    {/* Main Content Grid */}
-                    <div className="content-grid">
-                        {/* Quick Actions */}
-                        <Card className="quick-actions-card">
-                            <div className="card-header">
-                                <h3>⚡ Quick Actions</h3>
-                                <p>Get started quickly</p>
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Quick Actions */}
+                    <Card className="lg:col-span-1 h-full">
+                        <div className="mb-4">
+                            <h3 className="text-xl font-semibold text-text-main">⚡ Quick Actions</h3>
+                            <p className="text-text-muted text-sm">Get started quickly</p>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            {quickActions.map((action, index) => (
+                                <div
+                                    key={index}
+                                    className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all bg-bg-dark/50 hover:bg-bg-hover border border-transparent ${action.hoverBorder}`}
+                                    onClick={action.action}
+                                >
+                                    <div className={`text-2xl p-2 rounded-lg bg-${action.color}/10 text-${action.color}`}>
+                                        {action.icon}
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-text-main">{action.title}</h4>
+                                        <p className="text-xs text-text-muted">{action.description}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+
+                    {/* Recent Classes */}
+                    <Card className="lg:col-span-2 h-full">
+                        <div className="mb-4 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-xl font-semibold text-text-main">🏫 Recent Classes</h3>
+                                <p className="text-text-muted text-sm">{user?.role === 'teacher' ? 'Classes you created' : 'Recently enrolled'}</p>
                             </div>
-                            <div className="quick-actions">
-                                {quickActions.map((action, index) => (
-                                    <div
-                                        key={index}
-                                        className={`quick-action-item quick-action-${action.color}`}
-                                        onClick={action.action}
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            {loading ? (
+                                <div className="flex flex-col items-center justify-center py-8 text-text-muted">
+                                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2"></div>
+                                    <p>Loading classes...</p>
+                                </div>
+                            ) : recentClasses.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-8 text-center">
+                                    <div className="text-4xl mb-2">📭</div>
+                                    <h4 className="font-semibold mb-1 text-text-main">No classes yet</h4>
+                                    <p className="text-text-muted text-sm mb-4">
+                                        {user?.role === 'teacher'
+                                            ? 'Create your first class to get started'
+                                            : 'Join a class using the code from your teacher'}
+                                    </p>
+                                    <Button
+                                        variant="primary"
+                                        onClick={() => navigate('/classes')}
                                     >
-                                        <div className="quick-action-icon">{action.icon}</div>
-                                        <div className="quick-action-content">
-                                            <h4>{action.title}</h4>
-                                            <p>{action.description}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
-
-                        {/* Recent Classes */}
-                        <Card className="recent-classes-card">
-                            <div className="card-header">
-                                <h3>🏫 Recent Classes</h3>
-                                <p>{user?.role === 'teacher' ? 'Classes you created' : 'Recently enrolled'}</p>
-                            </div>
-                            <div className="recent-classes">
-                                {loading ? (
-                                    <div className="loading-state">
-                                        <div className="spinner"></div>
-                                        <p>Loading classes...</p>
-                                    </div>
-                                ) : recentClasses.length === 0 ? (
-                                    <div className="empty-state">
-                                        <div className="empty-icon">📭</div>
-                                        <h4>No classes yet</h4>
-                                        <p>
-                                            {user?.role === 'teacher'
-                                                ? 'Create your first class to get started'
-                                                : 'Join a class using the code from your teacher'}
-                                        </p>
-                                        <Button
-                                            variant="primary"
-                                            onClick={() => navigate('/classes')}
+                                        {user?.role === 'teacher' ? 'Create Class' : 'Join Class'}
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-3">
+                                    {recentClasses.map((cls) => (
+                                        <div
+                                            key={cls.id}
+                                            className="flex items-center justify-between p-4 bg-bg-dark border border-border rounded-xl cursor-pointer hover:bg-bg-hover hover:border-primary/30 transition-all group"
+                                            onClick={() => navigate(`/classes`)}
                                         >
-                                            {user?.role === 'teacher' ? 'Create Class' : 'Join Class'}
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <div className="class-list">
-                                        {recentClasses.map((cls) => (
-                                            <div
-                                                key={cls.id}
-                                                className="class-item glass-hover"
-                                                onClick={() => navigate(`/classes`)}
-                                            >
-                                                <div className="class-icon">🎓</div>
-                                                <div className="class-info">
-                                                    <h4>{cls.class_name}</h4>
-                                                    <div className="class-meta">
-                                                        <span className="class-code">{cls.class_code}</span>
-                                                        <span className="class-students">
-                                                            👥 {cls.student_count || 0} students
-                                                        </span>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-xl text-primary">🎓</div>
+                                                <div>
+                                                    <h4 className="font-semibold text-text-main group-hover:text-primary transition-colors">{cls.class_name}</h4>
+                                                    <div className="flex gap-3 text-xs text-text-muted">
+                                                        <span className="bg-bg-panel px-2 py-0.5 rounded border border-border font-mono">{cls.class_code}</span>
+                                                        <span>👥 {cls.student_count || 0} students</span>
                                                     </div>
                                                 </div>
-                                                <div className="class-arrow">→</div>
                                             </div>
-                                        ))}
-                                        {recentClasses.length > 0 && (
-                                            <Button
-                                                variant="ghost"
-                                                onClick={() => navigate('/classes')}
-                                                className="view-all-btn"
-                                            >
-                                                View All Classes →
-                                            </Button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </Card>
-                    </div>
-
-                    {/* Activity Feed */}
-                    <Card className="activity-feed-card">
-                        <div className="card-header">
-                            <h3>📊 Recent Activity</h3>
-                            <p>Your latest updates</p>
-                        </div>
-                        <div className="activity-feed">
-                            <div className="empty-state">
-                                <div className="empty-icon">📋</div>
-                                <h4>No recent activity</h4>
-                                <p>Your activity will appear here once you start using the platform</p>
-                            </div>
+                                            <div className="text-text-muted group-hover:translate-x-1 transition-transform">→</div>
+                                        </div>
+                                    ))}
+                                    {recentClasses.length > 0 && (
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => navigate('/classes')}
+                                            className="w-full mt-2 text-primary hover:bg-primary/10"
+                                        >
+                                            View All Classes →
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </Card>
                 </div>
+
+                {/* Upcoming Deadlines & Features */}
+                <Card className="w-full">
+                    <div className="mb-4">
+                        <h3 className="text-xl font-semibold text-text-main">📅 Upcoming Deadlines & Schedules</h3>
+                        <p className="text-text-muted text-sm">Stay on track with your learning</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {[
+                            { title: 'Live Class Schedules', icon: '🎥', color: 'primary' },
+                            { title: 'Course Completion', icon: '🏁', color: 'success' },
+                            { title: 'Quiz/Poll Deadlines', icon: '📝', color: 'warning' },
+                            { title: 'Assignment Submission', icon: '📤', color: 'danger' }
+                        ].map((item, index) => {
+                            const colorStyles = {
+                                primary: 'bg-primary/10 text-primary border-primary/20',
+                                success: 'bg-success/10 text-success border-success/20',
+                                warning: 'bg-warning/10 text-warning border-warning/20',
+                                danger: 'bg-danger/10 text-danger border-danger/20',
+                            };
+                            return (
+                                <div key={index} className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${colorStyles[item.color]}`}>
+                                    <div className="text-2xl">
+                                        {item.icon}
+                                    </div>
+                                    <span className="font-medium">{item.title}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </Card>
             </div>
-        </>
+        </div>
     );
 };
 

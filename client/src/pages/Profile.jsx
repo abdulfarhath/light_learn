@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../features/auth';
 import Navbar from '../shared/components/Navbar';
 import { authAPI } from '../features/auth/services/authAPI';
-import './Profile.css';
 
 const Profile = () => {
     const { user } = useAuth();
