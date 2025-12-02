@@ -18,15 +18,12 @@ let audioCtx;
 let nextStartTime = 0;
 
 function LiveSession() {
-    const { user } = useAuth(); // Get authenticated user
-
-    // --- NAVIGATION STATE ---
-    const [currentView, setCurrentView] = useState("dashboard");
+    const { user } = useAuth();
 
     // --- CLASSROOM STATE ---
     const [room, setRoom] = useState("");
-    const [username, setUsername] = useState(""); // 🆕 Added Username
-    const [role, setRole] = useState("student");  // 🆕 Added Role (teacher/student)
+    const [username, setUsername] = useState("");
+    const [role, setRole] = useState(user?.role || "student");
 
     const [isJoined, setIsJoined] = useState(false);
     const [isConnected, setIsConnected] = useState(socket.connected);
@@ -44,17 +41,13 @@ function LiveSession() {
     const [pageNum, setPageNum] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
 
-    // 🆕 QUIZ STATE
+    // QUIZ STATE
     const [savedQuizzes, setSavedQuizzes] = useState([]);
     const [activeQuiz, setActiveQuiz] = useState(null);
     const [quizStats, setQuizStats] = useState({ A: 0, B: 0, C: 0, D: 0 });
     const [showLaunchPad, setShowLaunchPad] = useState(false);
 
-    // 🆕 RESOURCES STATE
-    const [resourceList, setResourceList] = useState([]);
-    const resourceInputRef = useRef(null);
-
-    // 🆕 CHAT STATE
+    // CHAT STATE
     const [showChat, setShowChat] = useState(false);
     const [messages, setMessages] = useState([]);
     const [chatInput, setChatInput] = useState("");
@@ -115,15 +108,6 @@ function LiveSession() {
             });
         });
 
-        socket.on("resource_list_update", (list) => setResourceList(list));
-        socket.on("new_resource_available", (meta) => setResourceList(prev => [...prev, meta]));
-        socket.on("receive_download_data", (file) => {
-            const a = document.createElement("a");
-            a.href = file.dataURL;
-            a.download = file.name;
-            a.click();
-        });
-
         socket.on("receive_message", (msgData) => {
             setMessages(prev => [...prev, msgData]);
             setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
@@ -134,16 +118,16 @@ function LiveSession() {
             socket.off("receive_video_frame"); socket.off("receive_audio_stream");
             socket.off("receive_draw_data"); socket.off("receive_background_image");
             socket.off("receive_quiz"); socket.off("receive_answer"); socket.off("board_access_changed");
-            socket.off("resource_list_update"); socket.off("new_resource_available"); socket.off("receive_download_data");
             socket.off("receive_message");
         };
     }, [isJoined, role]);
 
     // --- ACTIONS ---
-    const handleJoin = (selectedRole) => {
+    const handleJoin = () => {
         if (!room || !username) return alert("Enter Name and Room ID");
-        setRole(selectedRole);
-        socket.emit("join_room", { room, username, role: selectedRole });
+        const userRole = user?.role || "student";
+        setRole(userRole);
+        socket.emit("join_room", { room, username, role: userRole });
         setIsJoined(true);
     };
 
@@ -151,18 +135,6 @@ function LiveSession() {
         const newState = !studentDrawAllowed;
         setStudentDrawAllowed(newState);
         socket.emit("toggle_board_access", { room, allowStudentsToDraw: newState });
-    };
-
-    const saveQuiz = (e) => {
-        e.preventDefault();
-        const newQuiz = {
-            id: Date.now(),
-            question: e.target.q.value,
-            options: [e.target.o1.value, e.target.o2.value, e.target.o3.value, e.target.o4.value]
-        };
-        setSavedQuizzes([...savedQuizzes, newQuiz]);
-        e.target.reset();
-        alert("Quiz Saved! You can launch it during the Live Class.");
     };
 
     const launchQuiz = (quiz) => {
@@ -176,7 +148,6 @@ function LiveSession() {
         setActiveQuiz(null); alert("Answer Sent!");
     };
 
-    // 🆕 CHAT SENDER
     const sendMessage = (e) => {
         e.preventDefault();
         if (!chatInput.trim()) return;
@@ -188,31 +159,6 @@ function LiveSession() {
         setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     };
 
-    // 🆕 RESOURCE ACTIONS
-    const uploadResource = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const fileData = {
-                name: file.name,
-                type: file.type,
-                size: (file.size / 1024).toFixed(1) + " KB",
-                dataURL: event.target.result
-            };
-            socket.emit("upload_resource", fileData);
-            alert("Resource Uploaded to Class!");
-        };
-    };
-
-    const downloadResource = (id) => {
-        // Request heavy data from server
-        socket.emit("request_download", id);
-    };
-
-    // ... (Media Engine & PDF Logic preserved) ...
     const initAudioEngine = () => { if (!audioCtx) { const AudioContext = window.AudioContext || window.webkitAudioContext; audioCtx = new AudioContext(); } if (audioCtx.state === 'suspended') audioCtx.resume(); setAudioActive(true); alert("Audio Enabled!"); };
     const startLiveClass = async () => { try { const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); if (myVideo.current) myVideo.current.srcObject = stream; setIsLive(true); setAudioActive(true); startVideoSnapshots(stream); startAudioRecorder(stream); } catch (err) { alert("Mic denied!"); } };
     const startAudioRecorder = (stream) => { if (!stream.active) return; let recorder = new MediaRecorder(stream); recorder.ondataavailable = async (e) => { if (e.data.size > 0 && socket.connected) { const ab = await e.data.arrayBuffer(); socket.emit("audio_stream", { room, audio: ab }); } }; recorder.start(); audioLoopRef.current = setTimeout(() => { if (recorder.state === "recording") recorder.stop(); if (stream.active) startAudioRecorder(stream); }, 1000); };
@@ -225,96 +171,19 @@ function LiveSession() {
     const canIDraw = () => { if (role === 'teacher') return true; if (role === 'student' && studentDrawAllowed) return true; return false; };
     const startDrawing = (e) => { if (!canIDraw()) return; if (e.type === 'touchstart') document.body.style.overflow = 'hidden'; const { x, y } = getPos(e); const composite = tool === 'eraser' ? 'destination-out' : 'source-over'; const color = tool === 'eraser' ? 'rgba(0,0,0,1)' : penColor; const width = tool === 'eraser' ? 30 : 2; ctxRef.current.globalCompositeOperation = composite; ctxRef.current.strokeStyle = color; ctxRef.current.lineWidth = width; ctxRef.current.beginPath(); ctxRef.current.moveTo(x, y); socket.emit("draw_data", { room, x, y, type: "start", color, width, composite }); };
     const draw = (e) => { if (!canIDraw()) return; if (e.buttons !== 1 && e.type !== 'touchmove') return; const { x, y } = getPos(e); const composite = tool === 'eraser' ? 'destination-out' : 'source-over'; const color = tool === 'eraser' ? 'rgba(0,0,0,1)' : penColor; const width = tool === 'eraser' ? 30 : 2; ctxRef.current.globalCompositeOperation = composite; ctxRef.current.strokeStyle = color; ctxRef.current.lineWidth = width; ctxRef.current.lineTo(x, y); ctxRef.current.stroke(); socket.emit("draw_data", { room, x, y, type: "draw", color, width, composite }); };
-    const stopDrawing = (e) => { if (!canIDraw()) return; if (e.type === 'touchend') document.body.style.overflow = 'auto'; ctxRef.current.closePath(); socket.emit("draw_data", { room, x: 0, y: 0, type: "end" }); };
+    const stopDrawing = (e) => { if (!canIDraw()) return; if (e.type === 'touchend') document.body.style.overflow = 'auto'; ctxRef.current.closePath(); socket.emit("draw_data", { room, x, y, y: 0, type: "end" }); };
     useEffect(() => { if (isJoined && canvasRef.current) { canvasRef.current.width = 1280; canvasRef.current.height = 720; ctxRef.current = canvasRef.current.getContext("2d"); ctxRef.current.lineCap = "round"; } }, [isJoined]);
 
-    // --- RENDER DASHBOARD/JOIN ---
+    // --- RENDER JOIN PAGE (directly) ---
     if (!isJoined) {
-        if (currentView === 'dashboard') {
-            return (
-                <div className="dashboard-view">
-                    <div className="welcome-box"><h1>👋 LightLearn LMS</h1><p>Preparation & Live Classes</p></div>
-                    <div className="grid-menu">
-                        <div className="card" onClick={() => setCurrentView('join')}><h3>🏫 Enter Class</h3><p>Join live session.</p></div>
-                        <div className="card" onClick={() => setCurrentView('quiz_prep')}><h3>📝 Quiz Prep</h3><p>Teacher Tools</p></div>
-                        {/* 🆕 RESOURCES BUTTON */}
-                        <div className="card" onClick={() => setCurrentView('resources')}><h3>📚 Resources</h3><p>Upload/Download Materials</p></div>
-                    </div>
-                </div>
-            );
-        }
-        if (currentView === 'quiz_prep') {
-            return ( /* ... Quiz Prep Render ... */
-                <div className="dashboard-view">
-                    <button className="nav-link" onClick={() => setCurrentView('dashboard')}>Back</button>
-                    <h2>Quiz Prep</h2>
-                    <form className="card" onSubmit={saveQuiz}>
-                        <input className="join-input" name="q" placeholder="Question" required />
-                        <input className="join-input" name="o1" placeholder="Option A" required />
-                        <input className="join-input" name="o2" placeholder="Option B" required />
-                        <input className="join-input" name="o3" placeholder="Option C" required />
-                        <input className="join-input" name="o4" placeholder="Option D" required />
-                        <button className="action-btn btn-primary">Save</button>
-                    </form>
-                    <div className="card" style={{ marginTop: '20px' }}>
-                        <h3>Saved Quizzes ({savedQuizzes.length})</h3>
-                        {savedQuizzes.map((q, i) => (
-                            <div key={q.id} style={{ borderBottom: '1px solid #333', padding: '10px 0', width: '100%' }}>
-                                <div style={{ fontWeight: 'bold' }}>{i + 1}. {q.question}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        }
-
-        // 🆕 RESOURCES VIEW
-        if (currentView === 'resources') {
-            return (
-                <div className="dashboard-view">
-                    <div className="navbar" style={{ width: '100%', marginBottom: '20px' }}>
-                        <div className="logo">Class<span>Materials</span></div>
-                        <button className="nav-link" onClick={() => setCurrentView('dashboard')}>Back</button>
-                    </div>
-
-                    {/* TEACHER UPLOAD */}
-                    <div className="card" style={{ marginBottom: '20px' }}>
-                        <h3>📤 Upload New Material (Teacher)</h3>
-                        <p>Share PDF notes or Audio recordings.</p>
-                        <button className="action-btn btn-primary" onClick={() => resourceInputRef.current.click()}>Select File</button>
-                        <input type="file" ref={resourceInputRef} style={{ display: 'none' }} onChange={uploadResource} />
-                    </div>
-
-                    {/* STUDENT LIST */}
-                    <h2>Available Downloads</h2>
-                    {resourceList.length === 0 ? <p style={{ color: '#666' }}>No resources shared yet.</p> :
-                        resourceList.map(res => (
-                            <div key={res.id} className="resource-item" style={{ display: 'flex', justifyContent: 'space-between', background: '#1a1a1a', padding: '15px', borderRadius: '8px', border: '1px solid #333', marginBottom: '10px' }}>
-                                <div className="res-info">
-                                    <div className="res-icon" style={{ fontSize: '24px' }}>📄</div>
-                                    <div className="res-text">
-                                        <h4 style={{ margin: '0 0 4px 0' }}>{res.name}</h4>
-                                        <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>{res.size} • {res.type}</p>
-                                    </div>
-                                </div>
-                                <button className="download-btn" onClick={() => downloadResource(res.id)}>Download</button>
-                            </div>
-                        ))
-                    }
-                </div>
-            );
-        }
-
         return (
             <div className="join-container">
                 <h1>Join Session</h1>
                 <input className="join-input" placeholder="Name" onChange={(e) => setUsername(e.target.value)} />
                 <input className="join-input" placeholder="Room ID" onChange={(e) => setRoom(e.target.value)} />
-                <div style={{ display: 'flex', gap: '10px', width: '100%', maxWidth: '320px' }}>
-                    <button className="join-button" onClick={() => handleJoin('student')}>Join as Student</button>
-                    <button className="join-button" style={{ background: '#6610f2' }} onClick={() => handleJoin('teacher')}>Join as Teacher</button>
-                </div>
-                <button className="nav-link" style={{ marginTop: '15px', border: 'none' }} onClick={() => setCurrentView('dashboard')}>Back</button>
+                <button className="join-button" onClick={handleJoin}>
+                    Join as {user?.role === 'teacher' ? 'Teacher' : 'Student'}
+                </button>
             </div>
         );
     }
@@ -350,7 +219,6 @@ function LiveSession() {
                             <div className="label">Teacher Stream</div>
                         </div>
 
-                        {/* 🆕 CHAT PANEL */}
                         {showChat && (
                             <div className="chat-panel" style={{ height: '150px', background: '#222', margin: '10px 0', padding: '5px', borderRadius: '4px', border: '1px solid #444', display: 'flex', flexDirection: 'column' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #444', paddingBottom: '2px', marginBottom: '5px', fontSize: '12px' }}>
@@ -376,7 +244,6 @@ function LiveSession() {
                                 {audioActive ? '🎤 Audio Active' : '🔇 Enable Audio'}
                             </button>
 
-                            {/* Everyone can start video */}
                             <button className={"action-btn " + (isLive ? 'btn-success' : 'btn-primary')} onClick={startLiveClass} disabled={isLive}>
                                 {isLive ? 'Transmitting...' : 'Start Camera & Mic'}
                             </button>
@@ -398,7 +265,7 @@ function LiveSession() {
                             )}
 
                             <button className="action-btn" onClick={() => setShowChat(!showChat)}>💬 Chat</button>
-                            <button className="action-btn btn-danger" onClick={() => { setIsJoined(false); setCurrentView('dashboard'); }}>Leave Class</button>
+                            <button className="action-btn btn-danger" onClick={() => setIsJoined(false)}>Leave Class</button>
                         </div>
                     </div>
                 </div>
