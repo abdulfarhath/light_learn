@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import "../App.css";
+import useAuthStore from "../stores/authStore";
 import Navbar from "../shared/components/Navbar";
-import { useAuth } from "../features/auth";
 
 const SOCKET_URL = "http://localhost:3001";
 
@@ -18,15 +17,15 @@ let audioCtx;
 let nextStartTime = 0;
 
 function LiveSession() {
-    const { user } = useAuth(); // Get authenticated user
+    const { user } = useAuthStore();
 
     // --- NAVIGATION STATE ---
     const [currentView, setCurrentView] = useState("dashboard");
 
     // --- CLASSROOM STATE ---
     const [room, setRoom] = useState("");
-    const [username, setUsername] = useState(""); // 🆕 Added Username
-    const [role, setRole] = useState("student");  // 🆕 Added Role (teacher/student)
+    const [username, setUsername] = useState("");
+    const [role, setRole] = useState("student");
 
     const [isJoined, setIsJoined] = useState(false);
     const [isConnected, setIsConnected] = useState(socket.connected);
@@ -232,35 +231,47 @@ function LiveSession() {
     if (!isJoined) {
         if (currentView === 'dashboard') {
             return (
-                <div className="dashboard-view">
-                    <div className="welcome-box"><h1>👋 LightLearn LMS</h1><p>Preparation & Live Classes</p></div>
-                    <div className="grid-menu">
-                        <div className="card" onClick={() => setCurrentView('join')}><h3>🏫 Enter Class</h3><p>Join live session.</p></div>
-                        <div className="card" onClick={() => setCurrentView('quiz_prep')}><h3>📝 Quiz Prep</h3><p>Teacher Tools</p></div>
+                <div className="flex flex-col items-center justify-center min-h-screen bg-bg-dark text-text-main p-4">
+                    <div className="text-center mb-12">
+                        <h1 className="text-4xl font-bold mb-2">👋 LightLearn LMS</h1>
+                        <p className="text-text-muted">Preparation & Live Classes</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+                        <div className="bg-bg-panel p-6 rounded-xl border border-border cursor-pointer hover:bg-bg-hover transition-all text-center" onClick={() => setCurrentView('join')}>
+                            <h3 className="text-xl font-semibold mb-2">🏫 Enter Class</h3>
+                            <p className="text-text-muted">Join live session.</p>
+                        </div>
+                        <div className="bg-bg-panel p-6 rounded-xl border border-border cursor-pointer hover:bg-bg-hover transition-all text-center" onClick={() => setCurrentView('quiz_prep')}>
+                            <h3 className="text-xl font-semibold mb-2">📝 Quiz Prep</h3>
+                            <p className="text-text-muted">Teacher Tools</p>
+                        </div>
                         {/* 🆕 RESOURCES BUTTON */}
-                        <div className="card" onClick={() => setCurrentView('resources')}><h3>📚 Resources</h3><p>Upload/Download Materials</p></div>
+                        <div className="bg-bg-panel p-6 rounded-xl border border-border cursor-pointer hover:bg-bg-hover transition-all text-center" onClick={() => setCurrentView('resources')}>
+                            <h3 className="text-xl font-semibold mb-2">📚 Resources</h3>
+                            <p className="text-text-muted">Upload/Download Materials</p>
+                        </div>
                     </div>
                 </div>
             );
         }
         if (currentView === 'quiz_prep') {
-            return ( /* ... Quiz Prep Render ... */
-                <div className="dashboard-view">
-                    <button className="nav-link" onClick={() => setCurrentView('dashboard')}>Back</button>
-                    <h2>Quiz Prep</h2>
-                    <form className="card" onSubmit={saveQuiz}>
-                        <input className="join-input" name="q" placeholder="Question" required />
-                        <input className="join-input" name="o1" placeholder="Option A" required />
-                        <input className="join-input" name="o2" placeholder="Option B" required />
-                        <input className="join-input" name="o3" placeholder="Option C" required />
-                        <input className="join-input" name="o4" placeholder="Option D" required />
-                        <button className="action-btn btn-primary">Save</button>
+            return (
+                <div className="flex flex-col items-center min-h-screen bg-bg-dark text-text-main p-4">
+                    <button className="self-start mb-6 text-text-muted hover:text-text-main" onClick={() => setCurrentView('dashboard')}>← Back</button>
+                    <h2 className="text-2xl font-bold mb-6">Quiz Prep</h2>
+                    <form className="bg-bg-panel p-6 rounded-xl border border-border w-full max-w-md space-y-4" onSubmit={saveQuiz}>
+                        <input className="w-full bg-bg-dark border border-border rounded p-3 text-text-main" name="o4" placeholder="Option D" required />
+                        <input className="w-full bg-bg-dark border border-border rounded p-3 text-white" name="o1" placeholder="Option A" required />
+                        <input className="w-full bg-bg-dark border border-border rounded p-3 text-white" name="o2" placeholder="Option B" required />
+                        <input className="w-full bg-bg-dark border border-border rounded p-3 text-white" name="o3" placeholder="Option C" required />
+                        <input className="w-full bg-bg-dark border border-border rounded p-3 text-white" name="o4" placeholder="Option D" required />
+                        <button className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded transition-colors">Save</button>
                     </form>
-                    <div className="card" style={{ marginTop: '20px' }}>
-                        <h3>Saved Quizzes ({savedQuizzes.length})</h3>
+                    <div className="bg-bg-panel p-6 rounded-xl border border-border w-full max-w-md mt-6">
+                        <h3 className="text-xl font-semibold mb-4">Saved Quizzes ({savedQuizzes.length})</h3>
                         {savedQuizzes.map((q, i) => (
-                            <div key={q.id} style={{ borderBottom: '1px solid #333', padding: '10px 0', width: '100%' }}>
-                                <div style={{ fontWeight: 'bold' }}>{i + 1}. {q.question}</div>
+                            <div key={q.id} className="border-b border-border py-3 last:border-0">
+                                <div className="font-medium">{i + 1}. {q.question}</div>
                             </div>
                         ))}
                     </div>
@@ -271,148 +282,159 @@ function LiveSession() {
         // 🆕 RESOURCES VIEW
         if (currentView === 'resources') {
             return (
-                <div className="dashboard-view">
-                    <div className="navbar" style={{ width: '100%', marginBottom: '20px' }}>
-                        <div className="logo">Class<span>Materials</span></div>
-                        <button className="nav-link" onClick={() => setCurrentView('dashboard')}>Back</button>
+                <div className="flex flex-col items-center min-h-screen bg-bg-dark text-text-main p-4">
+                    <div className="w-full max-w-4xl flex justify-between items-center mb-8">
+                        <div className="text-2xl font-bold">Class<span className="text-primary">Materials</span></div>
+                        <button className="text-text-muted hover:text-text-main" onClick={() => setCurrentView('dashboard')}>Back</button>
                     </div>
 
                     {/* TEACHER UPLOAD */}
-                    <div className="card" style={{ marginBottom: '20px' }}>
-                        <h3>📤 Upload New Material (Teacher)</h3>
-                        <p>Share PDF notes or Audio recordings.</p>
-                        <button className="action-btn btn-primary" onClick={() => resourceInputRef.current.click()}>Select File</button>
-                        <input type="file" ref={resourceInputRef} style={{ display: 'none' }} onChange={uploadResource} />
+                    <div className="bg-bg-panel p-6 rounded-xl border border-border w-full max-w-4xl mb-8">
+                        <h3 className="text-xl font-semibold mb-2">📤 Upload New Material (Teacher)</h3>
+                        <p className="text-text-muted mb-4">Share PDF notes or Audio recordings.</p>
+                        <button className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded transition-colors" onClick={() => resourceInputRef.current.click()}>Select File</button>
+                        <input type="file" ref={resourceInputRef} className="hidden" onChange={uploadResource} />
                     </div>
 
                     {/* STUDENT LIST */}
-                    <h2>Available Downloads</h2>
-                    {resourceList.length === 0 ? <p style={{ color: '#666' }}>No resources shared yet.</p> :
-                        resourceList.map(res => (
-                            <div key={res.id} className="resource-item" style={{ display: 'flex', justifyContent: 'space-between', background: '#1a1a1a', padding: '15px', borderRadius: '8px', border: '1px solid #333', marginBottom: '10px' }}>
-                                <div className="res-info">
-                                    <div className="res-icon" style={{ fontSize: '24px' }}>📄</div>
-                                    <div className="res-text">
-                                        <h4 style={{ margin: '0 0 4px 0' }}>{res.name}</h4>
-                                        <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>{res.size} • {res.type}</p>
+                    <div className="w-full max-w-4xl">
+                        <h2 className="text-xl font-semibold mb-4">Available Downloads</h2>
+                        {resourceList.length === 0 ? <p className="text-text-muted">No resources shared yet.</p> :
+                            resourceList.map(res => (
+                                <div key={res.id} className="flex justify-between items-center bg-bg-panel p-4 rounded-xl border border-border mb-3">
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-2xl">📄</div>
+                                        <div>
+                                            <h4 className="font-medium">{res.name}</h4>
+                                            <p className="text-xs text-text-muted">{res.size} • {res.type}</p>
+                                        </div>
                                     </div>
+                                    <button className="bg-bg-dark hover:bg-bg-hover border border-border px-4 py-2 rounded transition-colors" onClick={() => downloadResource(res.id)}>Download</button>
                                 </div>
-                                <button className="download-btn" onClick={() => downloadResource(res.id)}>Download</button>
-                            </div>
-                        ))
-                    }
+                            ))
+                        }
+                    </div>
                 </div>
             );
         }
 
         return (
-            <div className="join-container">
-                <h1>Join Session</h1>
-                <input className="join-input" placeholder="Name" onChange={(e) => setUsername(e.target.value)} />
-                <input className="join-input" placeholder="Room ID" onChange={(e) => setRoom(e.target.value)} />
-                <div style={{ display: 'flex', gap: '10px', width: '100%', maxWidth: '320px' }}>
-                    <button className="join-button" onClick={() => handleJoin('student')}>Join as Student</button>
-                    <button className="join-button" style={{ background: '#6610f2' }} onClick={() => handleJoin('teacher')}>Join as Teacher</button>
+            <div className="flex flex-col items-center justify-center min-h-screen bg-bg-dark text-text-main p-4">
+                <h1 className="text-3xl font-bold mb-8">Join Session</h1>
+                <div className="w-full max-w-xs space-y-4">
+                    <input className="w-full bg-bg-panel border border-border rounded p-3 text-text-main" placeholder="Room ID" onChange={(e) => setRoom(e.target.value)} />
+                    <input className="w-full bg-bg-panel border border-border rounded p-3 text-white" placeholder="Room ID" onChange={(e) => setRoom(e.target.value)} />
+                    <div className="flex gap-3">
+                        <button className="flex-1 bg-bg-panel hover:bg-bg-hover border border-border py-3 rounded transition-colors" onClick={() => handleJoin('student')}>Join as Student</button>
+                        <button className="flex-1 bg-primary hover:bg-primary-dark text-white py-3 rounded transition-colors" onClick={() => handleJoin('teacher')}>Join as Teacher</button>
+                    </div>
+                    <button className="w-full text-text-muted hover:text-text-main py-2" onClick={() => setCurrentView('dashboard')}>Back</button>
                 </div>
-                <button className="nav-link" style={{ marginTop: '15px', border: 'none' }} onClick={() => setCurrentView('dashboard')}>Back</button>
             </div>
         );
     }
 
     // --- RENDER LIVE CLASSROOM ---
     return (
-        <>
-            <Navbar />
-            <div className="App">
-                <div className="classroom-view">
-                    <div className="board-container">
-                        <div className="canvas-frame">
-                            {bgImage && <img src={bgImage} style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'absolute' }} alt="Slide" />}
-                            <canvas ref={canvasRef} onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing} onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={stopDrawing} style={{ width: '100%', height: '100%', position: 'absolute', cursor: canIDraw() ? (tool === 'eraser' ? 'cell' : 'crosshair') : 'not-allowed', background: 'transparent', touchAction: 'none' }} />
-                        </div>
-                        {canIDraw() && (
-                            <div className="floating-toolbar">
-                                <div className={"tool-btn " + (tool === 'pen' ? 'active' : '')} onClick={() => setTool('pen')}>✎</div>
-                                <div className={"tool-btn " + (tool === 'eraser' ? 'active' : '')} onClick={() => setTool('eraser')}>🧹</div>
-                                <div style={{ height: '1px', background: '#555', margin: '5px 0' }}></div>
-                                {['black', 'red', 'blue', 'green'].map(c => <div key={c} className={"color-dot " + (penColor === c ? 'active' : '')} style={{ background: c }} onClick={() => { setTool('pen'); setPenColor(c) }}></div>)}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="sidebar">
-                        <div className="video-box">
-                            <video ref={myVideo} autoPlay muted playsInline className="video-feed" />
-                            <div className="label">Me ({role})</div>
-                        </div>
-                        <div className="video-box">
-                            <img ref={userImage} className="video-feed" style={{ background: '#000' }} alt="Peer" />
-                            <div className="label">Teacher Stream</div>
-                        </div>
-
-                        {/* 🆕 CHAT PANEL */}
-                        {showChat && (
-                            <div className="chat-panel" style={{ height: '150px', background: '#222', margin: '10px 0', padding: '5px', borderRadius: '4px', border: '1px solid #444', display: 'flex', flexDirection: 'column' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #444', paddingBottom: '2px', marginBottom: '5px', fontSize: '12px' }}>
-                                    <span>💬 Chat</span>
-                                    <button onClick={() => setShowChat(false)} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}>×</button>
-                                </div>
-                                <div style={{ flex: 1, overflowY: 'auto', fontSize: '12px' }}>
-                                    {messages.map((m, i) => (
-                                        <div key={i} style={{ marginBottom: '4px', color: '#ddd' }}>
-                                            <b style={{ color: m.role === 'teacher' ? '#ffc107' : '#0d6efd' }}>{m.sender}:</b> {m.text}
-                                        </div>
-                                    ))}
-                                    <div ref={chatEndRef}></div>
-                                </div>
-                                <form onSubmit={sendMessage} style={{ display: 'flex', marginTop: '5px' }}>
-                                    <input style={{ flex: 1, padding: '4px', borderRadius: '2px', border: 'none', background: '#111', color: 'white', fontSize: '12px' }} value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="Type..." />
-                                </form>
-                            </div>
-                        )}
-
-                        <div className="control-panel">
-                            <button className={"action-btn " + (audioActive ? 'btn-success' : '')} onClick={initAudioEngine}>
-                                {audioActive ? '🎤 Audio Active' : '🔇 Enable Audio'}
-                            </button>
-
-                            {/* Everyone can start video */}
-                            <button className={"action-btn " + (isLive ? 'btn-success' : 'btn-primary')} onClick={startLiveClass} disabled={isLive}>
-                                {isLive ? 'Transmitting...' : 'Start Camera & Mic'}
-                            </button>
-
-                            {role === 'teacher' && (
-                                <>
-                                    <button className="action-btn" style={{ background: studentDrawAllowed ? '#dc3545' : '#198754' }} onClick={toggleBoardAccess}>{studentDrawAllowed ? '🔒 Lock Board' : '🔓 Unlock Board'}</button>
-                                    <button className="action-btn" onClick={() => fileInputRef.current.click()}>⬆ Share Slide</button>
-                                    <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }} ref={fileInputRef} onChange={handleFileUpload} />
-                                    <button className="action-btn" style={{ background: '#6610f2' }} onClick={() => setShowLaunchPad(!showLaunchPad)}>🚀 Quiz</button>
-                                    {showLaunchPad && (
-                                        <div style={{ background: '#222', padding: '5px', borderRadius: '4px', marginTop: '5px' }}>
-                                            {savedQuizzes.map(q => <button key={q.id} onClick={() => launchQuiz(q)} style={{ width: '100%', marginBottom: '2px', padding: '4px', background: '#333', border: 'none', color: 'white', textAlign: 'left', fontSize: '10px', cursor: 'pointer' }}>▶ {q.question}</button>)}
-                                        </div>
-                                    )}
-                                    <div style={{ fontSize: '10px', color: '#aaa', marginTop: '5px', textAlign: 'center' }}>Results: A:{quizStats.A} B:{quizStats.B} C:{quizStats.C} D:{quizStats.D}</div>
-                                    {pdfDoc && <div style={{ display: 'flex', gap: '5px' }}><button className="action-btn" style={{ flex: 1 }} onClick={() => changePage(-1)}>Prev</button><button className="action-btn" style={{ flex: 1 }} onClick={() => changePage(1)}>Next</button></div>}
-                                </>
-                            )}
-
-                            <button className="action-btn" onClick={() => setShowChat(!showChat)}>💬 Chat</button>
-                            <button className="action-btn btn-danger" onClick={() => { setIsJoined(false); setCurrentView('dashboard'); }}>Leave Class</button>
-                        </div>
-                    </div>
+        <div className="flex h-screen bg-bg-dark text-text-main overflow-hidden">
+            <div className="flex-1 relative bg-black">
+                <div className="absolute inset-0">
+                    {bgImage && <img src={bgImage} className="w-full h-full object-contain absolute" alt="Slide" />}
+                    <canvas
+                        ref={canvasRef}
+                        onMouseDown={startDrawing}
+                        onMouseMove={draw}
+                        onMouseUp={stopDrawing}
+                        onMouseLeave={stopDrawing}
+                        onTouchStart={startDrawing}
+                        onTouchMove={draw}
+                        onTouchEnd={stopDrawing}
+                        className={`w-full h-full absolute touch-none ${canIDraw() ? (tool === 'eraser' ? 'cursor-cell' : 'cursor-crosshair') : 'cursor-not-allowed'}`}
+                    />
                 </div>
-
-                {activeQuiz && (
-                    <div style={{ position: 'absolute', bottom: '80px', left: '50%', transform: 'translateX(-50%)', background: 'white', color: 'black', padding: '15px', borderRadius: '8px', boxShadow: '0 0 20px rgba(0,0,0,0.5)', zIndex: 600, width: '250px' }}>
-                        <h4 style={{ margin: '0 0 10px 0' }}>{activeQuiz.question}</h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                            {activeQuiz.options.map((opt, i) => <button key={i} onClick={() => submitAnswer(i)} style={{ padding: '8px', background: '#f0f0f0', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer' }}>{opt}</button>)}
-                        </div>
+                {canIDraw() && (
+                    <div className="absolute top-4 left-4 bg-bg-panel border border-border p-2 rounded-lg flex flex-col gap-2 shadow-lg z-10">
+                        <div className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${tool === 'pen' ? 'bg-primary text-white' : 'hover:bg-bg-hover'}`} onClick={() => setTool('pen')}>✎</div>
+                        <div className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${tool === 'eraser' ? 'bg-primary text-white' : 'hover:bg-bg-hover'}`} onClick={() => setTool('eraser')}>🧹</div>
+                        <div className="h-px bg-border my-1"></div>
+                        {['black', 'red', 'blue', 'green'].map(c => (
+                            <div key={c} className={`w-6 h-6 rounded-full cursor-pointer border-2 ${penColor === c ? 'border-white' : 'border-transparent'}`} style={{ background: c }} onClick={() => { setTool('pen'); setPenColor(c) }}></div>
+                        ))}
                     </div>
                 )}
             </div>
-        </>
+
+            <div className="w-80 bg-bg-panel border-l border-border flex flex-col p-4 gap-4 z-20 shadow-xl">
+                <div className="relative aspect-video bg-black rounded-lg overflow-hidden border border-border">
+                    <video ref={myVideo} autoPlay muted playsInline className="w-full h-full object-cover" />
+                    <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Me ({role})</div>
+                </div>
+                <div className="relative aspect-video bg-black rounded-lg overflow-hidden border border-border">
+                    <img ref={userImage} className="w-full h-full object-cover" alt="Peer" />
+                    <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Teacher Stream</div>
+                </div>
+
+                {/* 🆕 CHAT PANEL */}
+                {showChat && (
+                    <div className="flex-1 bg-bg-dark rounded-lg border border-border flex flex-col overflow-hidden">
+                        <div className="flex justify-between items-center p-2 border-b border-border bg-bg-panel">
+                            <span className="text-xs font-semibold">💬 Chat</span>
+                            <button onClick={() => setShowChat(false)} className="text-text-muted hover:text-text-main">×</button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-2 text-xs space-y-1">
+                            {messages.map((m, i) => (
+                                <div key={i} className="text-text-secondary">
+                                    <b style={{ color: m.role === 'teacher' ? '#ffc107' : '#0d6efd' }}>{m.sender}:</b> {m.text}
+                                </div>
+                            ))}
+                            <div ref={chatEndRef}></div>
+                        </div>
+                        <form onSubmit={sendMessage} className="p-2 border-t border-border bg-bg-panel">
+                            <input className="w-full bg-bg-dark border border-border rounded px-2 py-1 text-xs text-text-main focus:outline-none focus:border-primary" value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="Type..." />
+                        </form>
+                    </div>
+                )}
+
+                <div className="flex flex-col gap-2 mt-auto">
+                    <button className={`w-full py-2 rounded text-sm font-medium transition-colors ${audioActive ? 'bg-success text-white' : 'bg-bg-dark border border-border hover:bg-bg-hover'}`} onClick={initAudioEngine}>
+                        {audioActive ? '🎤 Audio Active' : '🔇 Enable Audio'}
+                    </button>
+
+                    {/* Everyone can start video */}
+                    <button className={`w-full py-2 rounded text-sm font-medium transition-colors ${isLive ? 'bg-success text-white' : 'bg-primary hover:bg-primary-dark text-white'}`} onClick={startLiveClass} disabled={isLive}>
+                        {isLive ? 'Transmitting...' : 'Start Camera & Mic'}
+                    </button>
+
+                    {role === 'teacher' && (
+                        <>
+                            <button className={`w-full py-2 rounded text-sm font-medium transition-colors ${studentDrawAllowed ? 'bg-danger text-white' : 'bg-success text-white'}`} onClick={toggleBoardAccess}>{studentDrawAllowed ? '🔒 Lock Board' : '🔓 Unlock Board'}</button>
+                            <button className="w-full py-2 rounded text-sm font-medium bg-bg-dark border border-border hover:bg-bg-hover transition-colors" onClick={() => fileInputRef.current.click()}>⬆ Share Slide</button>
+                            <input type="file" accept="image/*,application/pdf" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+                            <button className="w-full py-2 rounded text-sm font-medium bg-primary hover:bg-primary-dark text-white transition-colors" onClick={() => setShowLaunchPad(!showLaunchPad)}>🚀 Quiz</button>
+                            {showLaunchPad && (
+                                <div className="bg-bg-dark p-2 rounded border border-border space-y-1">
+                                    {savedQuizzes.map(q => <button key={q.id} onClick={() => launchQuiz(q)} className="w-full text-left text-xs p-2 rounded hover:bg-bg-hover truncate">▶ {q.question}</button>)}
+                                </div>
+                            )}
+                            <div className="text-xs text-center text-text-muted">Results: A:{quizStats.A} B:{quizStats.B} C:{quizStats.C} D:{quizStats.D}</div>
+                            {pdfDoc && <div className="flex gap-2"><button className="flex-1 py-1 bg-bg-dark border border-border rounded hover:bg-bg-hover text-xs" onClick={() => changePage(-1)}>Prev</button><button className="flex-1 py-1 bg-bg-dark border border-border rounded hover:bg-bg-hover text-xs" onClick={() => changePage(1)}>Next</button></div>}
+                        </>
+                    )}
+
+                    <button className="w-full py-2 rounded text-sm font-medium bg-bg-dark border border-border hover:bg-bg-hover transition-colors" onClick={() => setShowChat(!showChat)}>💬 Chat</button>
+                    <button className="w-full py-2 rounded text-sm font-medium bg-danger hover:bg-red-700 text-white transition-colors" onClick={() => { setIsJoined(false); setCurrentView('dashboard'); }}>Leave Class</button>
+                </div>
+            </div>
+
+            {activeQuiz && (
+                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-white text-black p-6 rounded-xl shadow-2xl z-50 w-80 animate-slide-up">
+                    <h4 className="font-bold mb-4 text-lg">{activeQuiz.question}</h4>
+                    <div className="flex flex-col gap-2">
+                        {activeQuiz.options.map((opt, i) => <button key={i} onClick={() => submitAnswer(i)} className="p-3 bg-gray-100 border border-gray-200 rounded hover:bg-primary hover:text-white transition-colors text-left">{opt}</button>)}
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }
 
