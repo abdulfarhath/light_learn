@@ -19,13 +19,10 @@ let nextStartTime = 0;
 function LiveSession() {
     const { user } = useAuthStore();
 
-    // --- NAVIGATION STATE ---
-    const [currentView, setCurrentView] = useState("dashboard");
-
     // --- CLASSROOM STATE ---
     const [room, setRoom] = useState("");
     const [username, setUsername] = useState("");
-    const [role, setRole] = useState("student");
+    const [role, setRole] = useState(user?.role || "student");
 
     const [isJoined, setIsJoined] = useState(false);
     const [isConnected, setIsConnected] = useState(socket.connected);
@@ -43,17 +40,13 @@ function LiveSession() {
     const [pageNum, setPageNum] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
 
-    // 🆕 QUIZ STATE
+    // QUIZ STATE
     const [savedQuizzes, setSavedQuizzes] = useState([]);
     const [activeQuiz, setActiveQuiz] = useState(null);
     const [quizStats, setQuizStats] = useState({ A: 0, B: 0, C: 0, D: 0 });
     const [showLaunchPad, setShowLaunchPad] = useState(false);
 
-    // 🆕 RESOURCES STATE
-    const [resourceList, setResourceList] = useState([]);
-    const resourceInputRef = useRef(null);
-
-    // 🆕 CHAT STATE
+    // CHAT STATE
     const [showChat, setShowChat] = useState(false);
     const [messages, setMessages] = useState([]);
     const [chatInput, setChatInput] = useState("");
@@ -114,15 +107,6 @@ function LiveSession() {
             });
         });
 
-        socket.on("resource_list_update", (list) => setResourceList(list));
-        socket.on("new_resource_available", (meta) => setResourceList(prev => [...prev, meta]));
-        socket.on("receive_download_data", (file) => {
-            const a = document.createElement("a");
-            a.href = file.dataURL;
-            a.download = file.name;
-            a.click();
-        });
-
         socket.on("receive_message", (msgData) => {
             setMessages(prev => [...prev, msgData]);
             setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
@@ -133,16 +117,16 @@ function LiveSession() {
             socket.off("receive_video_frame"); socket.off("receive_audio_stream");
             socket.off("receive_draw_data"); socket.off("receive_background_image");
             socket.off("receive_quiz"); socket.off("receive_answer"); socket.off("board_access_changed");
-            socket.off("resource_list_update"); socket.off("new_resource_available"); socket.off("receive_download_data");
             socket.off("receive_message");
         };
     }, [isJoined, role]);
 
     // --- ACTIONS ---
-    const handleJoin = (selectedRole) => {
+    const handleJoin = () => {
         if (!room || !username) return alert("Enter Name and Room ID");
-        setRole(selectedRole);
-        socket.emit("join_room", { room, username, role: selectedRole });
+        const userRole = user?.role || "student";
+        setRole(userRole);
+        socket.emit("join_room", { room, username, role: userRole });
         setIsJoined(true);
     };
 
@@ -150,18 +134,6 @@ function LiveSession() {
         const newState = !studentDrawAllowed;
         setStudentDrawAllowed(newState);
         socket.emit("toggle_board_access", { room, allowStudentsToDraw: newState });
-    };
-
-    const saveQuiz = (e) => {
-        e.preventDefault();
-        const newQuiz = {
-            id: Date.now(),
-            question: e.target.q.value,
-            options: [e.target.o1.value, e.target.o2.value, e.target.o3.value, e.target.o4.value]
-        };
-        setSavedQuizzes([...savedQuizzes, newQuiz]);
-        e.target.reset();
-        alert("Quiz Saved! You can launch it during the Live Class.");
     };
 
     const launchQuiz = (quiz) => {
@@ -175,7 +147,6 @@ function LiveSession() {
         setActiveQuiz(null); alert("Answer Sent!");
     };
 
-    // 🆕 CHAT SENDER
     const sendMessage = (e) => {
         e.preventDefault();
         if (!chatInput.trim()) return;
@@ -187,31 +158,6 @@ function LiveSession() {
         setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     };
 
-    // 🆕 RESOURCE ACTIONS
-    const uploadResource = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const fileData = {
-                name: file.name,
-                type: file.type,
-                size: (file.size / 1024).toFixed(1) + " KB",
-                dataURL: event.target.result
-            };
-            socket.emit("upload_resource", fileData);
-            alert("Resource Uploaded to Class!");
-        };
-    };
-
-    const downloadResource = (id) => {
-        // Request heavy data from server
-        socket.emit("request_download", id);
-    };
-
-    // ... (Media Engine & PDF Logic preserved) ...
     const initAudioEngine = () => { if (!audioCtx) { const AudioContext = window.AudioContext || window.webkitAudioContext; audioCtx = new AudioContext(); } if (audioCtx.state === 'suspended') audioCtx.resume(); setAudioActive(true); alert("Audio Enabled!"); };
     const startLiveClass = async () => { try { const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); if (myVideo.current) myVideo.current.srcObject = stream; setIsLive(true); setAudioActive(true); startVideoSnapshots(stream); startAudioRecorder(stream); } catch (err) { alert("Mic denied!"); } };
     const startAudioRecorder = (stream) => { if (!stream.active) return; let recorder = new MediaRecorder(stream); recorder.ondataavailable = async (e) => { if (e.data.size > 0 && socket.connected) { const ab = await e.data.arrayBuffer(); socket.emit("audio_stream", { room, audio: ab }); } }; recorder.start(); audioLoopRef.current = setTimeout(() => { if (recorder.state === "recording") recorder.stop(); if (stream.active) startAudioRecorder(stream); }, 1000); };
@@ -227,108 +173,17 @@ function LiveSession() {
     const stopDrawing = (e) => { if (!canIDraw()) return; if (e.type === 'touchend') document.body.style.overflow = 'auto'; ctxRef.current.closePath(); socket.emit("draw_data", { room, x: 0, y: 0, type: "end" }); };
     useEffect(() => { if (isJoined && canvasRef.current) { canvasRef.current.width = 1280; canvasRef.current.height = 720; ctxRef.current = canvasRef.current.getContext("2d"); ctxRef.current.lineCap = "round"; } }, [isJoined]);
 
-    // --- RENDER DASHBOARD/JOIN ---
+    // --- RENDER JOIN PAGE (directly) ---
     if (!isJoined) {
-        if (currentView === 'dashboard') {
-            return (
-                <div className="flex flex-col items-center justify-center min-h-screen bg-bg-dark text-text-main p-4">
-                    <div className="text-center mb-12">
-                        <h1 className="text-4xl font-bold mb-2">👋 LightLearn LMS</h1>
-                        <p className="text-text-muted">Preparation & Live Classes</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
-                        <div className="bg-bg-panel p-6 rounded-xl border border-border cursor-pointer hover:bg-bg-hover transition-all text-center" onClick={() => setCurrentView('join')}>
-                            <h3 className="text-xl font-semibold mb-2">🏫 Enter Class</h3>
-                            <p className="text-text-muted">Join live session.</p>
-                        </div>
-                        <div className="bg-bg-panel p-6 rounded-xl border border-border cursor-pointer hover:bg-bg-hover transition-all text-center" onClick={() => setCurrentView('quiz_prep')}>
-                            <h3 className="text-xl font-semibold mb-2">📝 Quiz Prep</h3>
-                            <p className="text-text-muted">Teacher Tools</p>
-                        </div>
-                        {/* 🆕 RESOURCES BUTTON */}
-                        <div className="bg-bg-panel p-6 rounded-xl border border-border cursor-pointer hover:bg-bg-hover transition-all text-center" onClick={() => setCurrentView('resources')}>
-                            <h3 className="text-xl font-semibold mb-2">📚 Resources</h3>
-                            <p className="text-text-muted">Upload/Download Materials</p>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-        if (currentView === 'quiz_prep') {
-            return (
-                <div className="flex flex-col items-center min-h-screen bg-bg-dark text-text-main p-4">
-                    <button className="self-start mb-6 text-text-muted hover:text-text-main" onClick={() => setCurrentView('dashboard')}>← Back</button>
-                    <h2 className="text-2xl font-bold mb-6">Quiz Prep</h2>
-                    <form className="bg-bg-panel p-6 rounded-xl border border-border w-full max-w-md space-y-4" onSubmit={saveQuiz}>
-                        <input className="w-full bg-bg-dark border border-border rounded p-3 text-text-main" name="o4" placeholder="Option D" required />
-                        <input className="w-full bg-bg-dark border border-border rounded p-3 text-white" name="o1" placeholder="Option A" required />
-                        <input className="w-full bg-bg-dark border border-border rounded p-3 text-white" name="o2" placeholder="Option B" required />
-                        <input className="w-full bg-bg-dark border border-border rounded p-3 text-white" name="o3" placeholder="Option C" required />
-                        <input className="w-full bg-bg-dark border border-border rounded p-3 text-white" name="o4" placeholder="Option D" required />
-                        <button className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded transition-colors">Save</button>
-                    </form>
-                    <div className="bg-bg-panel p-6 rounded-xl border border-border w-full max-w-md mt-6">
-                        <h3 className="text-xl font-semibold mb-4">Saved Quizzes ({savedQuizzes.length})</h3>
-                        {savedQuizzes.map((q, i) => (
-                            <div key={q.id} className="border-b border-border py-3 last:border-0">
-                                <div className="font-medium">{i + 1}. {q.question}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        }
-
-        // 🆕 RESOURCES VIEW
-        if (currentView === 'resources') {
-            return (
-                <div className="flex flex-col items-center min-h-screen bg-bg-dark text-text-main p-4">
-                    <div className="w-full max-w-4xl flex justify-between items-center mb-8">
-                        <div className="text-2xl font-bold">Class<span className="text-primary">Materials</span></div>
-                        <button className="text-text-muted hover:text-text-main" onClick={() => setCurrentView('dashboard')}>Back</button>
-                    </div>
-
-                    {/* TEACHER UPLOAD */}
-                    <div className="bg-bg-panel p-6 rounded-xl border border-border w-full max-w-4xl mb-8">
-                        <h3 className="text-xl font-semibold mb-2">📤 Upload New Material (Teacher)</h3>
-                        <p className="text-text-muted mb-4">Share PDF notes or Audio recordings.</p>
-                        <button className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded transition-colors" onClick={() => resourceInputRef.current.click()}>Select File</button>
-                        <input type="file" ref={resourceInputRef} className="hidden" onChange={uploadResource} />
-                    </div>
-
-                    {/* STUDENT LIST */}
-                    <div className="w-full max-w-4xl">
-                        <h2 className="text-xl font-semibold mb-4">Available Downloads</h2>
-                        {resourceList.length === 0 ? <p className="text-text-muted">No resources shared yet.</p> :
-                            resourceList.map(res => (
-                                <div key={res.id} className="flex justify-between items-center bg-bg-panel p-4 rounded-xl border border-border mb-3">
-                                    <div className="flex items-center gap-4">
-                                        <div className="text-2xl">📄</div>
-                                        <div>
-                                            <h4 className="font-medium">{res.name}</h4>
-                                            <p className="text-xs text-text-muted">{res.size} • {res.type}</p>
-                                        </div>
-                                    </div>
-                                    <button className="bg-bg-dark hover:bg-bg-hover border border-border px-4 py-2 rounded transition-colors" onClick={() => downloadResource(res.id)}>Download</button>
-                                </div>
-                            ))
-                        }
-                    </div>
-                </div>
-            );
-        }
-
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-bg-dark text-text-main p-4">
                 <h1 className="text-3xl font-bold mb-8">Join Session</h1>
                 <div className="w-full max-w-xs space-y-4">
-                    <input className="w-full bg-bg-panel border border-border rounded p-3 text-text-main" placeholder="Room ID" onChange={(e) => setRoom(e.target.value)} />
+                    <input className="w-full bg-bg-panel border border-border rounded p-3 text-text-main" placeholder="Name" onChange={(e) => setUsername(e.target.value)} />
                     <input className="w-full bg-bg-panel border border-border rounded p-3 text-white" placeholder="Room ID" onChange={(e) => setRoom(e.target.value)} />
-                    <div className="flex gap-3">
-                        <button className="flex-1 bg-bg-panel hover:bg-bg-hover border border-border py-3 rounded transition-colors" onClick={() => handleJoin('student')}>Join as Student</button>
-                        <button className="flex-1 bg-primary hover:bg-primary-dark text-white py-3 rounded transition-colors" onClick={() => handleJoin('teacher')}>Join as Teacher</button>
-                    </div>
-                    <button className="w-full text-text-muted hover:text-text-main py-2" onClick={() => setCurrentView('dashboard')}>Back</button>
+                    <button className="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded transition-colors font-medium" onClick={handleJoin}>
+                        Join as {user?.role === 'teacher' ? 'Teacher' : 'Student'}
+                    </button>
                 </div>
             </div>
         );
@@ -374,7 +229,7 @@ function LiveSession() {
                     <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Teacher Stream</div>
                 </div>
 
-                {/* 🆕 CHAT PANEL */}
+                {/* CHAT PANEL */}
                 {showChat && (
                     <div className="flex-1 bg-bg-dark rounded-lg border border-border flex flex-col overflow-hidden">
                         <div className="flex justify-between items-center p-2 border-b border-border bg-bg-panel">
@@ -400,7 +255,6 @@ function LiveSession() {
                         {audioActive ? '🎤 Audio Active' : '🔇 Enable Audio'}
                     </button>
 
-                    {/* Everyone can start video */}
                     <button className={`w-full py-2 rounded text-sm font-medium transition-colors ${isLive ? 'bg-success text-white' : 'bg-primary hover:bg-primary-dark text-white'}`} onClick={startLiveClass} disabled={isLive}>
                         {isLive ? 'Transmitting...' : 'Start Camera & Mic'}
                     </button>
@@ -422,7 +276,7 @@ function LiveSession() {
                     )}
 
                     <button className="w-full py-2 rounded text-sm font-medium bg-bg-dark border border-border hover:bg-bg-hover transition-colors" onClick={() => setShowChat(!showChat)}>💬 Chat</button>
-                    <button className="w-full py-2 rounded text-sm font-medium bg-danger hover:bg-red-700 text-white transition-colors" onClick={() => { setIsJoined(false); setCurrentView('dashboard'); }}>Leave Class</button>
+                    <button className="w-full py-2 rounded text-sm font-medium bg-danger hover:bg-red-700 text-white transition-colors" onClick={() => setIsJoined(false)}>Leave Class</button>
                 </div>
             </div>
 
