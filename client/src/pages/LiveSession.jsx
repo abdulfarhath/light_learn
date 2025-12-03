@@ -52,6 +52,9 @@ function LiveSession() {
     const [chatInput, setChatInput] = useState("");
     const chatEndRef = useRef(null);
 
+    // MOBILE STATE
+    const [showSidebar, setShowSidebar] = useState(false);
+
     const myVideo = useRef(null);
     const userImage = useRef(null);
     const canvasRef = useRef(null);
@@ -191,7 +194,15 @@ function LiveSession() {
 
     // --- RENDER LIVE CLASSROOM ---
     return (
-        <div className="flex h-screen bg-bg-dark text-text-main overflow-hidden">
+        <div className="flex flex-col md:flex-row h-screen bg-bg-dark text-text-main overflow-hidden">
+            {/* Mobile Controls Toggle */}
+            <button
+                className="md:hidden fixed top-4 right-4 z-50 bg-primary text-white p-3 rounded-full shadow-lg"
+                onClick={() => setShowSidebar(!showSidebar)}
+            >
+                {showSidebar ? '✕' : '☰'}
+            </button>
+
             <div className="flex-1 relative bg-black">
                 <div className="absolute inset-0">
                     {bgImage && <img src={bgImage} className="w-full h-full object-contain absolute" alt="Slide" />}
@@ -208,35 +219,64 @@ function LiveSession() {
                     />
                 </div>
                 {canIDraw() && (
-                    <div className="absolute top-4 left-4 bg-bg-panel border border-border p-2 rounded-lg flex flex-col gap-2 shadow-lg z-10">
-                        <div className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${tool === 'pen' ? 'bg-primary text-white' : 'hover:bg-bg-hover'}`} onClick={() => setTool('pen')}>✎</div>
-                        <div className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${tool === 'eraser' ? 'bg-primary text-white' : 'hover:bg-bg-hover'}`} onClick={() => setTool('eraser')}>🧹</div>
-                        <div className="h-px bg-border my-1"></div>
-                        {['black', 'red', 'blue', 'green'].map(c => (
-                            <div key={c} className={`w-6 h-6 rounded-full cursor-pointer border-2 ${penColor === c ? 'border-white' : 'border-transparent'}`} style={{ background: c }} onClick={() => { setTool('pen'); setPenColor(c) }}></div>
-                        ))}
-                    </div>
+                    <>
+                        {/* Desktop Toolbar - Left Side */}
+                        <div className="hidden md:flex absolute top-4 left-4 bg-bg-panel border border-border p-2 rounded-lg flex-col gap-2 shadow-lg z-10">
+                            <div className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${tool === 'pen' ? 'bg-primary text-white' : 'hover:bg-bg-hover'}`} onClick={() => setTool('pen')}>✎</div>
+                            <div className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${tool === 'eraser' ? 'bg-primary text-white' : 'hover:bg-bg-hover'}`} onClick={() => setTool('eraser')}>🧹</div>
+                            <div className="h-px bg-border my-1"></div>
+                            {['black', 'red', 'blue', 'green'].map(c => (
+                                <div key={c} className={`w-6 h-6 rounded-full cursor-pointer border-2 ${penColor === c ? 'border-white' : 'border-transparent'}`} style={{ background: c }} onClick={() => { setTool('pen'); setPenColor(c) }}></div>
+                            ))}
+                        </div>
+
+                        {/* Mobile Toolbar - Bottom Center */}
+                        <div className="md:hidden absolute bottom-4 left-1/2 -translate-x-1/2 bg-bg-panel border border-border p-3 rounded-full flex gap-3 shadow-lg z-10">
+                            <div className={`w-11 h-11 flex items-center justify-center rounded-full cursor-pointer text-lg ${tool === 'pen' ? 'bg-primary text-white' : 'hover:bg-bg-hover'}`} onClick={() => setTool('pen')}>✎</div>
+                            <div className={`w-11 h-11 flex items-center justify-center rounded-full cursor-pointer text-lg ${tool === 'eraser' ? 'bg-primary text-white' : 'hover:bg-bg-hover'}`} onClick={() => setTool('eraser')}>🧹</div>
+                            <div className="w-px bg-border"></div>
+                            {['black', 'red', 'blue', 'green'].map(c => (
+                                <div key={c} className={`w-9 h-9 rounded-full cursor-pointer border-2 ${penColor === c ? 'border-white' : 'border-transparent'}`} style={{ background: c }} onClick={() => { setTool('pen'); setPenColor(c) }}></div>
+                            ))}
+                        </div>
+                    </>
                 )}
             </div>
 
-            <div className="w-80 bg-bg-panel border-l border-border flex flex-col p-4 gap-4 z-20 shadow-xl">
-                <div className="relative aspect-video bg-black rounded-lg overflow-hidden border border-border">
-                    <video ref={myVideo} autoPlay muted playsInline className="w-full h-full object-cover" />
-                    <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Me ({role})</div>
-                </div>
-                <div className="relative aspect-video bg-black rounded-lg overflow-hidden border border-border">
-                    <img ref={userImage} className="w-full h-full object-cover" alt="Peer" />
-                    <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Teacher Stream</div>
+            {/* Sidebar - Desktop: Right panel, Mobile: Bottom sheet */}
+            <div className={`
+                fixed md:relative
+                ${showSidebar ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}
+                transition-transform duration-300 ease-in-out
+                bottom-0 md:bottom-auto
+                left-0 md:left-auto
+                right-0 md:right-auto
+                max-h-[80vh] md:max-h-none
+                w-full md:w-80
+                bg-bg-panel border-t md:border-l md:border-t-0 border-border
+                flex flex-col p-4 gap-4 z-20 shadow-xl
+                overflow-y-auto
+            `}>
+                {/* Video Streams - Side by side on mobile, stacked on desktop */}
+                <div className="flex md:flex-col gap-2">
+                    <div className="relative flex-1 md:flex-none aspect-video bg-black rounded-lg overflow-hidden border border-border">
+                        <video ref={myVideo} autoPlay muted playsInline className="w-full h-full object-cover" />
+                        <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Me ({role})</div>
+                    </div>
+                    <div className="relative flex-1 md:flex-none aspect-video bg-black rounded-lg overflow-hidden border border-border">
+                        <img ref={userImage} className="w-full h-full object-cover" alt="Peer" />
+                        <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Teacher Stream</div>
+                    </div>
                 </div>
 
-                {/* CHAT PANEL */}
+                {/* CHAT PANEL - Full screen on mobile when open */}
                 {showChat && (
-                    <div className="flex-1 bg-bg-dark rounded-lg border border-border flex flex-col overflow-hidden">
-                        <div className="flex justify-between items-center p-2 border-b border-border bg-bg-panel">
-                            <span className="text-xs font-semibold">💬 Chat</span>
-                            <button onClick={() => setShowChat(false)} className="text-text-muted hover:text-text-main">×</button>
+                    <div className="fixed md:relative inset-0 md:inset-auto flex-1 bg-bg-dark md:rounded-lg border md:border border-border flex flex-col overflow-hidden z-30">
+                        <div className="flex justify-between items-center p-3 md:p-2 border-b border-border bg-bg-panel">
+                            <span className="text-sm md:text-xs font-semibold">💬 Chat</span>
+                            <button onClick={() => setShowChat(false)} className="text-text-muted hover:text-text-main text-2xl md:text-xl">×</button>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-2 text-xs space-y-1">
+                        <div className="flex-1 overflow-y-auto p-3 md:p-2 text-sm md:text-xs space-y-2 md:space-y-1">
                             {messages.map((m, i) => (
                                 <div key={i} className="text-text-secondary">
                                     <b style={{ color: m.role === 'teacher' ? '#ffc107' : '#0d6efd' }}>{m.sender}:</b> {m.text}
@@ -244,47 +284,47 @@ function LiveSession() {
                             ))}
                             <div ref={chatEndRef}></div>
                         </div>
-                        <form onSubmit={sendMessage} className="p-2 border-t border-border bg-bg-panel">
-                            <input className="w-full bg-bg-dark border border-border rounded px-2 py-1 text-xs text-text-main focus:outline-none focus:border-primary" value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="Type..." />
+                        <form onSubmit={sendMessage} className="p-3 md:p-2 border-t border-border bg-bg-panel">
+                            <input className="w-full bg-bg-dark border border-border rounded px-3 py-2 md:px-2 md:py-1 text-sm md:text-xs text-text-main focus:outline-none focus:border-primary" value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="Type..." />
                         </form>
                     </div>
                 )}
 
                 <div className="flex flex-col gap-2 mt-auto">
-                    <button className={`w-full py-2 rounded text-sm font-medium transition-colors ${audioActive ? 'bg-success text-white' : 'bg-bg-dark border border-border hover:bg-bg-hover'}`} onClick={initAudioEngine}>
+                    <button className={`w-full py-3 md:py-2 rounded text-base md:text-sm font-medium transition-colors ${audioActive ? 'bg-success text-white' : 'bg-bg-dark border border-border hover:bg-bg-hover'}`} onClick={initAudioEngine}>
                         {audioActive ? '🎤 Audio Active' : '🔇 Enable Audio'}
                     </button>
 
-                    <button className={`w-full py-2 rounded text-sm font-medium transition-colors ${isLive ? 'bg-success text-white' : 'bg-primary hover:bg-primary-dark text-white'}`} onClick={startLiveClass} disabled={isLive}>
+                    <button className={`w-full py-3 md:py-2 rounded text-base md:text-sm font-medium transition-colors ${isLive ? 'bg-success text-white' : 'bg-primary hover:bg-primary-dark text-white'}`} onClick={startLiveClass} disabled={isLive}>
                         {isLive ? 'Transmitting...' : 'Start Camera & Mic'}
                     </button>
 
                     {role === 'teacher' && (
                         <>
-                            <button className={`w-full py-2 rounded text-sm font-medium transition-colors ${studentDrawAllowed ? 'bg-danger text-white' : 'bg-success text-white'}`} onClick={toggleBoardAccess}>{studentDrawAllowed ? '🔒 Lock Board' : '🔓 Unlock Board'}</button>
-                            <button className="w-full py-2 rounded text-sm font-medium bg-bg-dark border border-border hover:bg-bg-hover transition-colors" onClick={() => fileInputRef.current.click()}>⬆ Share Slide</button>
+                            <button className={`w-full py-3 md:py-2 rounded text-base md:text-sm font-medium transition-colors ${studentDrawAllowed ? 'bg-danger text-white' : 'bg-success text-white'}`} onClick={toggleBoardAccess}>{studentDrawAllowed ? '🔒 Lock Board' : '🔓 Unlock Board'}</button>
+                            <button className="w-full py-3 md:py-2 rounded text-base md:text-sm font-medium bg-bg-dark border border-border hover:bg-bg-hover transition-colors" onClick={() => fileInputRef.current.click()}>⬆ Share Slide</button>
                             <input type="file" accept="image/*,application/pdf" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
-                            <button className="w-full py-2 rounded text-sm font-medium bg-primary hover:bg-primary-dark text-white transition-colors" onClick={() => setShowLaunchPad(!showLaunchPad)}>🚀 Quiz</button>
+                            <button className="w-full py-3 md:py-2 rounded text-base md:text-sm font-medium bg-primary hover:bg-primary-dark text-white transition-colors" onClick={() => setShowLaunchPad(!showLaunchPad)}>🚀 Quiz</button>
                             {showLaunchPad && (
                                 <div className="bg-bg-dark p-2 rounded border border-border space-y-1">
-                                    {savedQuizzes.map(q => <button key={q.id} onClick={() => launchQuiz(q)} className="w-full text-left text-xs p-2 rounded hover:bg-bg-hover truncate">▶ {q.question}</button>)}
+                                    {savedQuizzes.map(q => <button key={q.id} onClick={() => launchQuiz(q)} className="w-full text-left text-sm md:text-xs p-2 rounded hover:bg-bg-hover truncate">▶ {q.question}</button>)}
                                 </div>
                             )}
-                            <div className="text-xs text-center text-text-muted">Results: A:{quizStats.A} B:{quizStats.B} C:{quizStats.C} D:{quizStats.D}</div>
-                            {pdfDoc && <div className="flex gap-2"><button className="flex-1 py-1 bg-bg-dark border border-border rounded hover:bg-bg-hover text-xs" onClick={() => changePage(-1)}>Prev</button><button className="flex-1 py-1 bg-bg-dark border border-border rounded hover:bg-bg-hover text-xs" onClick={() => changePage(1)}>Next</button></div>}
+                            <div className="text-sm md:text-xs text-center text-text-muted">Results: A:{quizStats.A} B:{quizStats.B} C:{quizStats.C} D:{quizStats.D}</div>
+                            {pdfDoc && <div className="flex gap-2"><button className="flex-1 py-2 md:py-1 bg-bg-dark border border-border rounded hover:bg-bg-hover text-sm md:text-xs" onClick={() => changePage(-1)}>Prev</button><button className="flex-1 py-2 md:py-1 bg-bg-dark border border-border rounded hover:bg-bg-hover text-sm md:text-xs" onClick={() => changePage(1)}>Next</button></div>}
                         </>
                     )}
 
-                    <button className="w-full py-2 rounded text-sm font-medium bg-bg-dark border border-border hover:bg-bg-hover transition-colors" onClick={() => setShowChat(!showChat)}>💬 Chat</button>
-                    <button className="w-full py-2 rounded text-sm font-medium bg-danger hover:bg-red-700 text-white transition-colors" onClick={() => setIsJoined(false)}>Leave Class</button>
+                    <button className="w-full py-3 md:py-2 rounded text-base md:text-sm font-medium bg-bg-dark border border-border hover:bg-bg-hover transition-colors" onClick={() => setShowChat(!showChat)}>💬 Chat</button>
+                    <button className="w-full py-3 md:py-2 rounded text-base md:text-sm font-medium bg-danger hover:bg-red-700 text-white transition-colors" onClick={() => setIsJoined(false)}>Leave Class</button>
                 </div>
             </div>
 
             {activeQuiz && (
-                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-white text-black p-6 rounded-xl shadow-2xl z-50 w-80 animate-slide-up">
-                    <h4 className="font-bold mb-4 text-lg">{activeQuiz.question}</h4>
-                    <div className="flex flex-col gap-2">
-                        {activeQuiz.options.map((opt, i) => <button key={i} onClick={() => submitAnswer(i)} className="p-3 bg-gray-100 border border-gray-200 rounded hover:bg-primary hover:text-white transition-colors text-left">{opt}</button>)}
+                <div className="absolute bottom-20 md:bottom-20 left-1/2 -translate-x-1/2 bg-white text-black p-6 md:p-6 rounded-xl shadow-2xl z-50 w-[90%] max-w-md md:w-80 animate-slide-up">
+                    <h4 className="font-bold mb-4 text-lg md:text-lg">{activeQuiz.question}</h4>
+                    <div className="flex flex-col gap-3 md:gap-2">
+                        {activeQuiz.options.map((opt, i) => <button key={i} onClick={() => submitAnswer(i)} className="p-4 md:p-3 bg-gray-100 border border-gray-200 rounded hover:bg-primary hover:text-white transition-colors text-left text-base md:text-sm min-h-[48px]">{opt}</button>)}
                     </div>
                 </div>
             )}
