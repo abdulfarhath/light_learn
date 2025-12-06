@@ -18,7 +18,7 @@ class AuthController {
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const { email, password, full_name, role } = req.body;
+            const { email, password, full_name, role, year, semester, branch, college } = req.body;
 
             // Check if user already exists
             const existingUser = await authService.findUserByEmail(email);
@@ -26,8 +26,16 @@ class AuthController {
                 return res.status(409).json({ error: 'User with this email already exists' });
             }
 
+            // Sanitize input: Convert empty strings to null for optional fields
+            const profileData = {
+                year: year || null,
+                semester: semester || null,
+                branch: branch || null,
+                college: college || null
+            };
+
             // Create new user
-            const newUser = await authService.createUser(email, password, full_name, role);
+            const newUser = await authService.createUser(email, password, full_name, role, profileData);
 
             res.status(201).json({
                 message: 'User registered successfully',

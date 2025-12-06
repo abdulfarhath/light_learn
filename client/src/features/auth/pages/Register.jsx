@@ -11,6 +11,10 @@ const Register = () => {
         password: '',
         full_name: '',
         role: 'student',
+        year: '',
+        semester: '',
+        branch: '',
+        college: '',
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -139,6 +143,73 @@ const Register = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {formData.role === 'student' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+                                <div className="space-y-2">
+                                    <label htmlFor="year" className="block text-sm font-medium text-text-secondary">Year</label>
+                                    <select
+                                        id="year"
+                                        name="year"
+                                        value={formData.year}
+                                        onChange={handleChange}
+                                        required
+                                        className="w-full px-4 py-3 bg-bg-dark border border-border rounded-xl text-text-main focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Select Year</option>
+                                        <option value="1">1st Year</option>
+                                        <option value="2">2nd Year</option>
+                                        <option value="3">3rd Year</option>
+                                        <option value="4">4th Year</option>
+                                    </select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label htmlFor="semester" className="block text-sm font-medium text-text-secondary">Semester</label>
+                                    <select
+                                        id="semester"
+                                        name="semester"
+                                        value={formData.semester}
+                                        onChange={handleChange}
+                                        required
+                                        className="w-full px-4 py-3 bg-bg-dark border border-border rounded-xl text-text-main focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Select Semester</option>
+                                        {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
+                                            <option key={sem} value={sem}>Semester {sem}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label htmlFor="branch" className="block text-sm font-medium text-text-secondary">Branch</label>
+                                    <input
+                                        type="text"
+                                        id="branch"
+                                        name="branch"
+                                        value={formData.branch}
+                                        onChange={handleChange}
+                                        required
+                                        placeholder="e.g. CSE"
+                                        className="w-full px-4 py-3 bg-bg-dark border border-border rounded-xl text-text-main focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label htmlFor="college" className="block text-sm font-medium text-text-secondary">College</label>
+                                    <input
+                                        type="text"
+                                        id="college"
+                                        name="college"
+                                        value={formData.college}
+                                        onChange={handleChange}
+                                        required
+                                        placeholder="College Name"
+                                        className="w-full px-4 py-3 bg-bg-dark border border-border rounded-xl text-text-main focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         {error && (
                             <div className="p-4 bg-danger/10 border border-danger/20 rounded-xl text-danger text-sm flex items-center gap-2">

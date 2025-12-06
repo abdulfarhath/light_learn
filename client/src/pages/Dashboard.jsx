@@ -17,6 +17,27 @@ const NewDashboard = () => {
         completedActivities: 0
     });
     const [recentClasses, setRecentClasses] = useState([]);
+    const [todos, setTodos] = useState([]);
+    const [newTodo, setNewTodo] = useState('');
+
+    // Load todos from localStorage on component mount
+    useEffect(() => {
+        const savedTodos = localStorage.getItem('dashboard-todos');
+        if (savedTodos) {
+            try {
+                setTodos(JSON.parse(savedTodos));
+            } catch (error) {
+                console.error('Error loading todos:', error);
+            }
+        }
+    }, []);
+
+    // Save todos to localStorage whenever they change
+    useEffect(() => {
+        if (todos.length > 0 || localStorage.getItem('dashboard-todos')) {
+            localStorage.setItem('dashboard-todos', JSON.stringify(todos));
+        }
+    }, [todos]);
 
     useEffect(() => {
         fetchDashboardData();
@@ -51,6 +72,31 @@ const NewDashboard = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Todo handlers
+    const addTodo = (e) => {
+        e.preventDefault();
+        if (newTodo.trim()) {
+            const todo = {
+                id: Date.now(),
+                text: newTodo.trim(),
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+            setTodos([todo, ...todos]);
+            setNewTodo('');
+        }
+    };
+
+    const toggleTodo = (id) => {
+        setTodos(todos.map(todo =>
+            todo.id === id ? { ...todo, completed: !todo.completed } : todo
+        ));
+    };
+
+    const deleteTodo = (id) => {
+        setTodos(todos.filter(todo => todo.id !== id));
     };
 
     const quickActions = user?.role === 'teacher' ? [
@@ -302,6 +348,96 @@ const NewDashboard = () => {
                         </div>
                     </Card>
                 </div>
+
+                {/* Todo List Section */}
+                <Card className="w-full">
+                    <div className="mb-4">
+                        <h3 className="text-xl font-semibold text-text-main">✅ My Todo List</h3>
+                        <p className="text-text-muted text-sm">Keep track of your tasks and assignments</p>
+                    </div>
+
+                    {/* Add Todo Form */}
+                    <form onSubmit={addTodo} className="mb-4">
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={newTodo}
+                                onChange={(e) => setNewTodo(e.target.value)}
+                                placeholder="Add a new task..."
+                                className="flex-1 px-4 py-2 bg-bg-dark border border-border rounded-lg text-text-main placeholder-text-muted focus:outline-none focus:border-primary transition-colors"
+                            />
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                className="px-6"
+                            >
+                                Add Task
+                            </Button>
+                        </div>
+                    </form>
+
+                    {/* Todo List */}
+                    <div className="flex flex-col gap-2">
+                        {todos.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-center">
+                                <div className="text-4xl mb-2">📝</div>
+                                <h4 className="font-semibold mb-1 text-text-main">No tasks yet</h4>
+                                <p className="text-text-muted text-sm">
+                                    Add your first task to get started
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2 max-h-96 overflow-y-auto no-scrollbar">
+                                {todos.map((todo) => (
+                                    <div
+                                        key={todo.id}
+                                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${todo.completed
+                                            ? 'bg-success/5 border-success/20'
+                                            : 'bg-bg-dark border-border hover:border-primary/30'
+                                            }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={todo.completed}
+                                            onChange={() => toggleTodo(todo.id)}
+                                            className="w-5 h-5 rounded border-border cursor-pointer accent-primary"
+                                        />
+                                        <span
+                                            className={`flex-1 ${todo.completed
+                                                ? 'text-text-muted line-through'
+                                                : 'text-text-main'
+                                                }`}
+                                        >
+                                            {todo.text}
+                                        </span>
+                                        <button
+                                            onClick={() => deleteTodo(todo.id)}
+                                            className="px-3 py-1 text-sm text-danger hover:bg-danger/10 rounded-lg transition-colors"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {todos.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-border flex justify-between items-center text-sm text-text-muted">
+                                <span>
+                                    {todos.filter(t => !t.completed).length} pending, {todos.filter(t => t.completed).length} completed
+                                </span>
+                                {todos.some(t => t.completed) && (
+                                    <button
+                                        onClick={() => setTodos(todos.filter(t => !t.completed))}
+                                        className="text-danger hover:text-danger/80 transition-colors"
+                                    >
+                                        Clear completed
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </Card>
 
                 {/* Upcoming Deadlines & Features */}
                 <Card className="w-full">

@@ -9,7 +9,7 @@ class UsersService {
      */
     async getUserById(userId) {
         const result = await pool.query(
-            'SELECT id, email, full_name, role, created_at FROM users WHERE id = $1',
+            'SELECT id, email, full_name, role, created_at, year, semester, branch, college FROM users WHERE id = $1',
             [userId]
         );
         return result.rows[0];
