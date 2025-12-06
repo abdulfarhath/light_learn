@@ -205,7 +205,7 @@ function LiveSession() {
 
             <div className="flex-1 relative bg-black">
                 <div className="absolute inset-0">
-                    {bgImage && <img src={bgImage} className="w-full h-full object-contain absolute" alt="Slide" />}
+                    {bgImage && <img src={bgImage} className="w-full h-full object-contain absolute z-0" alt="Slide" />}
                     <canvas
                         ref={canvasRef}
                         onMouseDown={startDrawing}
@@ -215,7 +215,7 @@ function LiveSession() {
                         onTouchStart={startDrawing}
                         onTouchMove={draw}
                         onTouchEnd={stopDrawing}
-                        className={`w-full h-full absolute touch-none ${canIDraw() ? (tool === 'eraser' ? 'cursor-cell' : 'cursor-crosshair') : 'cursor-not-allowed'}`}
+                        className={`w-full h-full absolute z-10 touch-none ${canIDraw() ? (tool === 'eraser' ? 'cursor-cell' : 'cursor-crosshair') : 'cursor-not-allowed'}`}
                     />
                 </div>
                 {canIDraw() && (

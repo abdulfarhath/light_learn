@@ -136,3 +136,27 @@ FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 -- Trigger for classes table
 CREATE TRIGGER update_classes_updated_at BEFORE UPDATE ON classes
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- SUBJECTS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS subjects (
+    id SERIAL PRIMARY KEY,
+    subject_name VARCHAR(255) NOT NULL,
+    subject_code VARCHAR(50) NOT NULL,
+    year INTEGER NOT NULL,
+    semester INTEGER NOT NULL,
+    branch VARCHAR(100) NOT NULL,
+    college VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(subject_code, college, branch, year, semester)
+);
+
+-- Indexes for subjects table
+CREATE INDEX IF NOT EXISTS idx_subjects_college_branch ON subjects(college, branch);
+CREATE INDEX IF NOT EXISTS idx_subjects_year_semester ON subjects(year, semester);
+
+-- Trigger for subjects table
+CREATE TRIGGER update_subjects_updated_at BEFORE UPDATE ON subjects
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

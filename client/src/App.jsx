@@ -7,6 +7,7 @@ import { Login, Register } from './features/auth';
 import { Profile } from './features/users';
 import { Classes } from './features/classes';
 import Dashboard from './pages/Dashboard';
+import Courses from './pages/Courses';
 import LiveSession from './pages/LiveSession';
 
 import Schedule from './pages/Schedule';
@@ -34,6 +35,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <Profile />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/courses"
+                        element={
+                            <ProtectedRoute>
+                                <Courses />
                             </ProtectedRoute>
                         }
                     />

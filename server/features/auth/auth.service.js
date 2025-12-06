@@ -31,15 +31,17 @@ class AuthService {
     /**
      * Create a new user
      */
-    async createUser(email, password, full_name, role) {
+    async createUser(email, password, full_name, role, profileData = {}) {
         // Hash password
         const saltRounds = 10;
         const password_hash = await bcrypt.hash(password, saltRounds);
 
+        const { year, semester, branch, college } = profileData;
+
         // Insert new user
         const result = await pool.query(
-            'INSERT INTO users (email, password_hash, full_name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, full_name, role, created_at',
-            [email, password_hash, full_name, role]
+            'INSERT INTO users (email, password_hash, full_name, role, year, semester, branch, college) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, email, full_name, role, year, semester, branch, college, created_at',
+            [email, password_hash, full_name, role, year, semester, branch, college]
         );
 
         return result.rows[0];
