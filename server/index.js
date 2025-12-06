@@ -9,18 +9,20 @@ app.use(cors());
 app.use(express.json());
 
 // Import feature modules
-const authModule = require('./features/auth');
-const usersModule = require('./features/users');
-const classesModule = require('./features/classes');
-const coursesModule = require('./features/courses');
+const authFeature = require('./features/auth');
+const usersFeature = require('./features/users');
+const classesFeature = require('./features/classes');
+const coursesFeature = require('./features/courses');
 const liveSessionsModule = require('./features/live-sessions');
 const resourcesModule = require('./features/resources');
+const todosFeature = require('./features/todos');
 
 // Mount feature routes
-app.use('/api/auth', authModule.routes);
-app.use('/api/users', usersModule.routes);
-app.use('/api/classes', classesModule.routes);
-app.use('/api/courses', coursesModule.routes);
+app.use('/api/auth', authFeature.routes);
+app.use('/api/users', usersFeature.routes);
+app.use('/api/classes', classesFeature.routes);
+app.use('/api/courses', coursesFeature.routes);
+app.use('/api/todos', todosFeature.routes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -5,6 +5,7 @@ import StatCard from '../shared/components/StatCard';
 import Card from '../shared/components/Card';
 import Button from '../shared/components/Button';
 import { classAPI } from '../services/api';
+import { todosAPI } from '../features/todos';
 
 const NewDashboard = () => {
     const { user } = useAuthStore();
@@ -20,24 +21,23 @@ const NewDashboard = () => {
     const [todos, setTodos] = useState([]);
     const [newTodo, setNewTodo] = useState('');
 
-    // Load todos from localStorage on component mount
+    // Load todos from API on component mount
     useEffect(() => {
-        const savedTodos = localStorage.getItem('dashboard-todos');
-        if (savedTodos) {
-            try {
-                setTodos(JSON.parse(savedTodos));
-            } catch (error) {
-                console.error('Error loading todos:', error);
-            }
-        }
+        fetchTodos();
     }, []);
 
-    // Save todos to localStorage whenever they change
     useEffect(() => {
-        if (todos.length > 0 || localStorage.getItem('dashboard-todos')) {
-            localStorage.setItem('dashboard-todos', JSON.stringify(todos));
+        fetchTodos();
+    }, []);
+
+    const fetchTodos = async () => {
+        try {
+            const data = await todosAPI.getTodos();
+            setTodos(data.todos || []);
+        } catch (error) {
+            console.error('Error loading todos:', error);
         }
-    }, [todos]);
+    };
 
     useEffect(() => {
         fetchDashboardData();
@@ -75,28 +75,37 @@ const NewDashboard = () => {
     };
 
     // Todo handlers
-    const addTodo = (e) => {
+    const addTodo = async (e) => {
         e.preventDefault();
         if (newTodo.trim()) {
-            const todo = {
-                id: Date.now(),
-                text: newTodo.trim(),
-                completed: false,
-                createdAt: new Date().toISOString()
-            };
-            setTodos([todo, ...todos]);
-            setNewTodo('');
+            try {
+                const data = await todosAPI.addTodo(newTodo.trim());
+                setTodos([data.todo, ...todos]);
+                setNewTodo('');
+            } catch (error) {
+                console.error('Error adding todo:', error);
+            }
         }
     };
 
-    const toggleTodo = (id) => {
-        setTodos(todos.map(todo =>
-            todo.id === id ? { ...todo, completed: !todo.completed } : todo
-        ));
+    const toggleTodo = async (id) => {
+        try {
+            const data = await todosAPI.toggleTodo(id);
+            setTodos(todos.map(todo =>
+                todo.id === id ? data.todo : todo
+            ));
+        } catch (error) {
+            console.error('Error toggling todo:', error);
+        }
     };
 
-    const deleteTodo = (id) => {
-        setTodos(todos.filter(todo => todo.id !== id));
+    const deleteTodo = async (id) => {
+        try {
+            await todosAPI.deleteTodo(id);
+            setTodos(todos.filter(todo => todo.id !== id));
+        } catch (error) {
+            console.error('Error deleting todo:', error);
+        }
     };
 
     const quickActions = user?.role === 'teacher' ? [
@@ -426,14 +435,6 @@ const NewDashboard = () => {
                                 <span>
                                     {todos.filter(t => !t.completed).length} pending, {todos.filter(t => t.completed).length} completed
                                 </span>
-                                {todos.some(t => t.completed) && (
-                                    <button
-                                        onClick={() => setTodos(todos.filter(t => !t.completed))}
-                                        className="text-danger hover:text-danger/80 transition-colors"
-                                    >
-                                        Clear completed
-                                    </button>
-                                )}
                             </div>
                         )}
                     </div>
@@ -469,8 +470,8 @@ const NewDashboard = () => {
                         })}
                     </div>
                 </Card>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 
