@@ -52,7 +52,7 @@ Open a terminal in the root directory:
 ```bash
 cd server
 npm install
-node index.js
+npm start
 ```
 
 The server will start on port 3001.
@@ -64,8 +64,8 @@ Open a new terminal window in the root directory:
 ```bash
 cd client
 npm install
-npm run build
-npm run preview
+npm run dev
+
 ```
 
 The app will run on http://localhost:4173.
