@@ -2,7 +2,8 @@ import api from '../../../services/api'; // Your Axios instance
 
 export const fetchDoubts = async () => {
     const response = await api.get('/doubts');
-    return response.data;
+    // Handle both array and object responses
+    return Array.isArray(response.data) ? response.data : (response.data.doubts || []);
 };
 
 export const createDoubt = async (doubtData) => {

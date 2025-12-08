@@ -3,7 +3,7 @@ const doubtService = require('./doubts.service');
 const getDoubts = async (req, res) => {
     try {
         const doubts = await doubtService.getAllDoubts();
-        res.json(doubts);
+        res.json({ doubts });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
