@@ -24,7 +24,7 @@ async function setupDatabase() {
         if (error.code === '42P04') {
             console.log('ℹ️  Database already exists');
         } else {
-            console.error('❌ Error creating datssase:', error.message);
+            console.error('❌ Error creating database:', error.message);
         }
     } finally {
         await adminPool.end();
