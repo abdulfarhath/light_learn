@@ -9,7 +9,7 @@ const MOCK_MODULES = [
         id: 1,
         title: "Module 1: Introduction",
         topics: [
-            { id: 101, title: "Course Overview", duration: "5m", type: "video", videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" }, // Placeholder video
+            { id: 101, title: "Course Overview", duration: "5m", type: "video", videoUrl: "https://www.youtube.com/embed/M_o6axw830g" }, // Educational video example
             { id: 102, title: "What is this subject?", duration: "12m", type: "video", videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" },
             { id: 103, title: "Syllabus Breakdown", duration: "8m", type: "pdf" }
         ]
@@ -183,14 +183,14 @@ const SubjectDetails = () => {
                                             key={topic.id}
                                             onClick={() => handleTopicClick(topic)}
                                             className={`px-4 py-3 flex items-start gap-3 cursor-pointer transition-colors border-l-4 ${activeTopic.id === topic.id
-                                                    ? 'bg-primary/5 border-primary'
-                                                    : 'hover:bg-bg-hover border-transparent'
+                                                ? 'bg-primary/5 border-primary'
+                                                : 'hover:bg-bg-hover border-transparent'
                                                 }`}
                                         >
                                             <div className="pt-1" onClick={(e) => toggleCompletion(topic.id, e)}>
                                                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${completedTopics.has(topic.id)
-                                                        ? 'bg-success border-success text-white'
-                                                        : 'border-text-muted hover:border-primary'
+                                                    ? 'bg-success border-success text-white'
+                                                    : 'border-text-muted hover:border-primary'
                                                     }`}>
                                                     {completedTopics.has(topic.id) && '✓'}
                                                 </div>

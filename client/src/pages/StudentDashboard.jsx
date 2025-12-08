@@ -120,39 +120,6 @@ const StudentDashboard = () => {
     return (
         <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 max-w-7xl mx-auto w-full no-scrollbar">
             <div className="flex flex-col gap-6">
-                {/* Welcome Section */}
-                <div className="bg-gradient-to-r from-primary to-accent p-10 rounded-2xl text-center text-white shadow-lg animate-slide-up relative overflow-hidden">
-                    <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]"></div>
-                    <div className="relative z-10">
-                        <div className="mb-6">
-                            <h1 className="text-3xl font-bold mb-2">
-                                Welcome back, <span className="text-white">{user?.full_name}</span>! 👋
-                            </h1>
-                            <p className="text-lg opacity-90 max-w-2xl mx-auto">
-                                Ready to continue your learning journey?
-                            </p>
-                        </div>
-                        <div className="flex gap-4 flex-wrap justify-center">
-                            <Button
-                                variant="primary"
-                                size="large"
-                                onClick={() => navigate('/live-session')}
-                                className="bg-white text-primary hover:bg-gray-100 border-none shadow-xl"
-                            >
-                                🎥 Join Live Session
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                size="large"
-                                onClick={() => navigate('/classes')}
-                                className="bg-white/10 backdrop-blur-md border border-white/30 text-white hover:bg-white/20"
-                            >
-                                📚 Browse Classes
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
                     <StatCard
@@ -183,97 +150,6 @@ const StudentDashboard = () => {
                         color="danger"
                         loading={loading}
                     />
-                </div>
-
-                {/* Main Content Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Quick Actions */}
-                    <Card className="lg:col-span-1 h-full">
-                        <div className="mb-4">
-                            <h3 className="text-xl font-semibold text-text-main">⚡ Quick Actions</h3>
-                            <p className="text-text-muted text-sm">Get started quickly</p>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            {quickActions.map((action, index) => (
-                                <div
-                                    key={index}
-                                    className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all bg-bg-dark/50 hover:bg-bg-hover border border-transparent ${action.hoverBorder}`}
-                                    onClick={action.action}
-                                >
-                                    <div className={`text-2xl p-2 rounded-lg bg-${action.color}/10 text-${action.color}`}>
-                                        {action.icon}
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold text-text-main">{action.title}</h4>
-                                        <p className="text-xs text-text-muted">{action.description}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </Card>
-
-                    {/* Recent Classes */}
-                    <Card className="lg:col-span-2 h-full">
-                        <div className="mb-4 flex justify-between items-center">
-                            <div>
-                                <h3 className="text-xl font-semibold text-text-main">🏫 Recent Classes</h3>
-                                <p className="text-text-muted text-sm">Recently enrolled</p>
-                            </div>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            {loading ? (
-                                <div className="flex flex-col items-center justify-center py-8 text-text-muted">
-                                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2"></div>
-                                    <p>Loading classes...</p>
-                                </div>
-                            ) : recentClasses.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-8 text-center">
-                                    <div className="text-4xl mb-2">📭</div>
-                                    <h4 className="font-semibold mb-1 text-text-main">No classes yet</h4>
-                                    <p className="text-text-muted text-sm mb-4">
-                                        Join a class using the code from your teacher
-                                    </p>
-                                    <Button
-                                        variant="primary"
-                                        onClick={() => navigate('/classes')}
-                                    >
-                                        Join Class
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col gap-3">
-                                    {recentClasses.map((cls) => (
-                                        <div
-                                            key={cls.id}
-                                            className="flex items-center justify-between p-4 bg-bg-dark border border-border rounded-xl cursor-pointer hover:bg-bg-hover hover:border-primary/30 transition-all group"
-                                            onClick={() => navigate(`/classes`)}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-xl text-primary">🎓</div>
-                                                <div>
-                                                    <h4 className="font-semibold text-text-main group-hover:text-primary transition-colors">{cls.class_name}</h4>
-                                                    <div className="flex gap-3 text-xs text-text-muted">
-                                                        <span className="bg-bg-panel px-2 py-0.5 rounded border border-border font-mono">{cls.class_code}</span>
-                                                        {/* Removed student count for students */}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="text-text-muted group-hover:translate-x-1 transition-transform">→</div>
-                                        </div>
-                                    ))}
-                                    {recentClasses.length > 0 && (
-                                        <Button
-                                            variant="ghost"
-                                            onClick={() => navigate('/classes')}
-                                            className="w-full mt-2 text-primary hover:bg-primary/10"
-                                        >
-                                            View All Classes →
-                                        </Button>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </Card>
                 </div>
 
                 {/* Todo List Section */}
@@ -365,6 +241,100 @@ const StudentDashboard = () => {
                         )}
                     </div>
                 </Card>
+
+                {/* Welcome Section */}
+
+
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Quick Actions */}
+                    <Card className="lg:col-span-1 h-full">
+                        <div className="mb-4">
+                            <h3 className="text-xl font-semibold text-text-main">⚡ Quick Actions</h3>
+                            <p className="text-text-muted text-sm">Get started quickly</p>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            {quickActions.map((action, index) => (
+                                <div
+                                    key={index}
+                                    className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all bg-bg-dark/50 hover:bg-bg-hover border border-transparent ${action.hoverBorder}`}
+                                    onClick={action.action}
+                                >
+                                    <div className={`text-2xl p-2 rounded-lg bg-${action.color}/10 text-${action.color}`}>
+                                        {action.icon}
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-text-main">{action.title}</h4>
+                                        <p className="text-xs text-text-muted">{action.description}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+
+                    {/* Recent Classes */}
+                    <Card className="lg:col-span-2 h-full">
+                        <div className="mb-4 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-xl font-semibold text-text-main">🏫 Recent Classes</h3>
+                                <p className="text-text-muted text-sm">Recently enrolled</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            {loading ? (
+                                <div className="flex flex-col items-center justify-center py-8 text-text-muted">
+                                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2"></div>
+                                    <p>Loading classes...</p>
+                                </div>
+                            ) : recentClasses.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-8 text-center">
+                                    <div className="text-4xl mb-2">📭</div>
+                                    <h4 className="font-semibold mb-1 text-text-main">No classes yet</h4>
+                                    <p className="text-text-muted text-sm mb-4">
+                                        Join a class using the code from your teacher
+                                    </p>
+                                    <Button
+                                        variant="primary"
+                                        onClick={() => navigate('/classes')}
+                                    >
+                                        Join Class
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-3">
+                                    {recentClasses.map((cls) => (
+                                        <div
+                                            key={cls.id}
+                                            className="flex items-center justify-between p-4 bg-bg-dark border border-border rounded-xl cursor-pointer hover:bg-bg-hover hover:border-primary/30 transition-all group"
+                                            onClick={() => navigate(`/classes`)}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-xl text-primary">🎓</div>
+                                                <div>
+                                                    <h4 className="font-semibold text-text-main group-hover:text-primary transition-colors">{cls.class_name}</h4>
+                                                    <div className="flex gap-3 text-xs text-text-muted">
+                                                        <span className="bg-bg-panel px-2 py-0.5 rounded border border-border font-mono">{cls.class_code}</span>
+                                                        {/* Removed student count for students */}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="text-text-muted group-hover:translate-x-1 transition-transform">→</div>
+                                        </div>
+                                    ))}
+                                    {recentClasses.length > 0 && (
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => navigate('/classes')}
+                                            className="w-full mt-2 text-primary hover:bg-primary/10"
+                                        >
+                                            View All Classes →
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+                </div>
             </div>
         </div>
     );
