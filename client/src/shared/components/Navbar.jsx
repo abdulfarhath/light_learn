@@ -19,7 +19,7 @@ const Navbar = () => {
     const navLinks = [
         { path: '/dashboard', label: 'Dashboard', icon: '📊' },
         { path: '/courses', label: 'Courses', icon: '📚' },
-        { path: '/classes', label: 'Classes', icon: '🏫' },
+
         { path: '/schedule', label: 'Schedule', icon: '📅' },
         { path: '/live-session', label: 'Live Session', icon: '🎥' },
         { path: '/profile', label: 'Profile', icon: '👤' },

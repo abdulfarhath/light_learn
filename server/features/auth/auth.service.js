@@ -1,82 +1,78 @@
+const pool = require('../../config/database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const pool = require('../../shared/config/database');
 
-/**
- * Auth Service - Handles business logic for authentication
- */
 class AuthService {
     /**
-     * Check if user exists by email
+     * Create a new user with profile details
+     */
+    async createUser(email, password, full_name, role, profileData = {}) {
+        const { year, semester, branch, college } = profileData;
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        // Updated query to include new columns
+        const result = await pool.query(
+            `INSERT INTO users (email, password_hash, full_name, role, year, semester, branch, college)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING id, email, full_name, role, created_at, year, semester, branch, college`,
+            [email, passwordHash, full_name, role, year, semester, branch, college]
+        );
+
+        return result.rows[0];
+    }
+
+    /**
+     * Find user by email (used for login)
      */
     async findUserByEmail(email) {
+        // SELECT * ensures we get all columns including the new ones
         const result = await pool.query(
-            'SELECT id, email, password_hash, full_name, role FROM users WHERE email = $1',
+            `SELECT * FROM users WHERE email = $1`,
             [email]
         );
         return result.rows[0];
     }
 
     /**
-     * Check if user exists by ID
+     * Find user by ID (used for 'getMe' / session checks)
      */
     async findUserById(id) {
         const result = await pool.query(
-            'SELECT id, email, full_name, role, created_at FROM users WHERE id = $1',
+            `SELECT id, email, full_name, role, password_hash, created_at, year, semester, branch, college 
+             FROM users WHERE id = $1`,
             [id]
         );
         return result.rows[0];
     }
 
-    /**
-     * Create a new user
-     */
-    async createUser(email, password, full_name, role, profileData = {}) {
-        // Hash password
-        const saltRounds = 10;
-        const password_hash = await bcrypt.hash(password, saltRounds);
-
-        const { year, semester, branch, college } = profileData;
-
-        // Insert new user
-        const result = await pool.query(
-            'INSERT INTO users (email, password_hash, full_name, role, year, semester, branch, college) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, email, full_name, role, year, semester, branch, college, created_at',
-            [email, password_hash, full_name, role, year, semester, branch, college]
-        );
-
-        return result.rows[0];
+    async verifyPassword(password, hash) {
+        return await bcrypt.compare(password, hash);
     }
 
-    /**
-     * Verify password
-     */
-    async verifyPassword(plainPassword, hashedPassword) {
-        return await bcrypt.compare(plainPassword, hashedPassword);
-    }
-
-    /**
-     * Generate JWT token
-     */
     generateToken(user) {
-        const tokenPayload = {
-            id: user.id,
-            email: user.email,
-            role: user.role
-        };
-
         return jwt.sign(
-            tokenPayload,
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+            { id: user.id, email: user.email, role: user.role },
+            process.env.JWT_SECRET || 'your_jwt_secret',
+            { expiresIn: '24h' }
         );
     }
 
     /**
-     * Sanitize user object (remove sensitive data)
+     * Remove sensitive data and ensure profile fields are included
      */
     sanitizeUser(user) {
-        const { password_hash, ...sanitized } = user;
-        return sanitized;
+        return {
+            id: user.id,
+            email: user.email,
+            full_name: user.full_name,
+            role: user.role,
+            created_at: user.created_at,
+            // Explicitly include the new fields
+            year: user.year,
+            semester: user.semester,
+            branch: user.branch,
+            college: user.college
+        };
     }
 }
 
