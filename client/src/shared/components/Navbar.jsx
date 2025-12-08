@@ -17,23 +17,23 @@ const Navbar = () => {
     const isActive = (path) => location.pathname === path;
 
     const teacherLinks = [
-        { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-        { path: '/classes', label: 'My Classes', icon: '🏫' },
-        { path: '/courses', label: 'Courses', icon: '📚' },
-        { path: '/doubts', label: 'Doubts', icon: '❓' },
-        { path: '/schedule', label: 'Schedule', icon: '📅' },
-        { path: '/live-session', label: 'Live Session', icon: '🎥' },
-        { path: '/profile', label: 'Profile', icon: '👤' },
+        { path: '/dashboard', label: 'Dashboard', icon: '' },
+        { path: '/classes', label: 'My Classes', icon: '' },
+        { path: '/courses', label: 'Courses', icon: '' },
+        { path: '/doubts', label: 'Doubts', icon: '' },
+        { path: '/schedule', label: 'Schedule', icon: '' },
+        { path: '/live-session', label: 'Live Session', icon: '' },
+        { path: '/profile', label: 'Profile', icon: '' },
     ];
 
     const studentLinks = [
-        { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-        { path: '/classes', label: 'My Classes', icon: '📚' },
-        { path: '/courses', label: 'Courses', icon: '🔍' },
-        { path: '/doubts', label: 'Doubts', icon: '❓' },
-        { path: '/schedule', label: 'Schedule', icon: '📅' },
-        { path: '/live-session', label: 'Live Session', icon: '🎥' },
-        { path: '/profile', label: 'Profile', icon: '👤' },
+        { path: '/dashboard', label: 'Dashboard', icon: '' },
+        { path: '/classes', label: 'My Classes', icon: '' },
+        { path: '/courses', label: 'Courses', icon: '' },
+        { path: '/doubts', label: 'Doubts', icon: '' },
+        { path: '/schedule', label: 'Schedule', icon: '' },
+        { path: '/live-session', label: 'Live Session', icon: '' },
+        { path: '/profile', label: 'Profile', icon: '' },
     ];
 
     const navLinks = user?.role === 'teacher' ? teacherLinks : studentLinks;
@@ -45,18 +45,18 @@ const Navbar = () => {
                 className="md:hidden fixed top-4 right-4 z-50 p-2 bg-bg-panel rounded-lg border border-border text-text-main"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-                {mobileMenuOpen ? '✕' : '☰'}
+                {mobileMenuOpen ? '' : ''}
             </button>
 
             {/* Sidebar Navigation */}
-            <nav className={`
+            <nav className={\
                 fixed md:relative z-40 w-64 h-full bg-bg-panel border-r border-border flex flex-col transition-transform duration-300 ease-in-out
-                ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-            `}>
+                \
+            \}>
                 {/* Logo */}
                 <div className="p-6 border-b border-border">
                     <Link to="/dashboard" className="flex items-center gap-2 text-2xl font-bold text-text-main">
-                        <span className="text-3xl">🎓</span>
+                        <span className="text-3xl"></span>
                         <span>
                             Light<span className="text-primary">Learn</span>
                         </span>
@@ -70,12 +70,10 @@ const Navbar = () => {
                             key={link.path}
                             to={link.path}
                             onClick={() => setMobileMenuOpen(false)}
-                            className={`
+                            className={\
                                 flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
-                                ${isActive(link.path)
-                                    ? 'bg-primary/10 text-primary border border-primary/20'
-                                    : 'text-text-secondary hover:bg-bg-hover hover:text-text-main'}
-                            `}
+                                \
+                            \}
                         >
                             <span className="text-xl">{link.icon}</span>
                             <span className="font-medium">{link.label}</span>
@@ -92,17 +90,18 @@ const Navbar = () => {
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-text-main truncate">{user?.full_name}</p>
                             <p className="text-xs text-text-muted capitalize flex items-center gap-1">
-                                {user?.role === 'teacher' ? '👨‍🏫' : '👨‍🎓'} {user?.role}
+                                {user?.role === 'teacher' ? '' : ''} {user?.role}
                             </p>
                         </div>
                     </div>
+                    
                     <div className="flex gap-2">
                         <ThemeToggle />
-                        <button
+                        <button 
                             onClick={handleLogout}
-                            className="flex-1 py-2 px-4 bg-bg-dark border border-border rounded-lg text-text-secondary hover:text-text-main hover:bg-bg-hover transition-colors text-sm font-medium"
+                            className="flex-1 flex items-center justify-center gap-2 p-2 rounded-lg bg-bg-hover hover:bg-red-500/10 hover:text-red-500 transition-colors text-sm font-medium text-text-secondary"
                         >
-                            Logout
+                            <span></span> Logout
                         </button>
                     </div>
                 </div>
@@ -110,7 +109,7 @@ const Navbar = () => {
 
             {/* Overlay for mobile */}
             {mobileMenuOpen && (
-                <div
+                <div 
                     className="fixed inset-0 bg-black/50 z-30 md:hidden"
                     onClick={() => setMobileMenuOpen(false)}
                 />

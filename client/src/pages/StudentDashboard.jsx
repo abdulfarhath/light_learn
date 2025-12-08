@@ -5,6 +5,7 @@ import StatCard from '../shared/components/StatCard';
 import Card from '../shared/components/Card';
 import Button from '../shared/components/Button';
 import { classAPI } from '../services/api';
+import { todosAPI } from '../features/todos';
 
 const StudentDashboard = () => {
     const { user } = useAuthStore();
@@ -20,21 +21,17 @@ const StudentDashboard = () => {
     const [newTodo, setNewTodo] = useState('');
 
     useEffect(() => {
-        const savedTodos = localStorage.getItem('student-dashboard-todos');
-        if (savedTodos) {
-            try {
-                setTodos(JSON.parse(savedTodos));
-            } catch (error) {
-                console.error('Error loading todos:', error);
-            }
-        }
+        fetchTodos();
     }, []);
 
-    useEffect(() => {
-        if (todos.length > 0 || localStorage.getItem('student-dashboard-todos')) {
-            localStorage.setItem('student-dashboard-todos', JSON.stringify(todos));
+    const fetchTodos = async () => {
+        try {
+            const data = await todosAPI.getTodos();
+            setTodos(data.todos || []);
+        } catch (error) {
+            console.error('Error loading todos:', error);
         }
-    }, [todos]);
+    };
 
     useEffect(() => {
         fetchDashboardData();
@@ -60,28 +57,37 @@ const StudentDashboard = () => {
         }
     };
 
-    const addTodo = (e) => {
+    const addTodo = async (e) => {
         e.preventDefault();
         if (newTodo.trim()) {
-            const todo = {
-                id: Date.now(),
-                text: newTodo.trim(),
-                completed: false,
-                createdAt: new Date().toISOString()
-            };
-            setTodos([todo, ...todos]);
-            setNewTodo('');
+            try {
+                const data = await todosAPI.addTodo(newTodo.trim());
+                setTodos([data.todo, ...todos]);
+                setNewTodo('');
+            } catch (error) {
+                console.error('Error adding todo:', error);
+            }
         }
     };
 
-    const toggleTodo = (id) => {
-        setTodos(todos.map(todo =>
-            todo.id === id ? { ...todo, completed: !todo.completed } : todo
-        ));
+    const toggleTodo = async (id) => {
+        try {
+            const data = await todosAPI.toggleTodo(id);
+            setTodos(todos.map(todo =>
+                todo.id === id ? data.todo : todo
+            ));
+        } catch (error) {
+            console.error('Error toggling todo:', error);
+        }
     };
 
-    const deleteTodo = (id) => {
-        setTodos(todos.filter(todo => todo.id !== id));
+    const deleteTodo = async (id) => {
+        try {
+            await todosAPI.deleteTodo(id);
+            setTodos(todos.filter(todo => todo.id !== id));
+        } catch (error) {
+            console.error('Error deleting todo:', error);
+        }
     };
 
     const quickActions = [
