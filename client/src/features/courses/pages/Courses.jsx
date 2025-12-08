@@ -22,7 +22,7 @@ const Courses = () => {
             setSubjects(data.subjects || []);
         } catch (err) {
             console.error('Error fetching subjects:', err);
-            setError('Failed to load subjects. Please try again.');
+            setError(err.response?.data?.error || 'Failed to load subjects. Please try again.');
         } finally {
             setLoading(false);
         }

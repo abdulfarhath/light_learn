@@ -2,6 +2,18 @@ const pool = require('../../shared/config/database');
 
 class CoursesService {
     /**
+     * Get all subjects (no filters)
+     */
+    async getAllSubjects() {
+        const result = await pool.query(
+            `SELECT *
+             FROM subjects
+             ORDER BY subject_name ASC`
+        );
+        return result.rows;
+    }
+
+    /**
      * Get subjects by filters (year, semester, branch, college)
      */
     async getSubjectsByFilters(filters) {
