@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../shared/components/Card';
 import useAuthStore from '../stores/authStore';
 import AssignmentModal from '../components/AssignmentModal';
 
 const Schedule = () => {
+    const navigate = useNavigate();
     const { user } = useAuthStore();
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [showAssignment, setShowAssignment] = useState(false);
@@ -162,14 +164,15 @@ const Schedule = () => {
                             )}
 
                             {selectedEvent.meetingLink && (
-                                <a
-                                    href={selectedEvent.meetingLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                <button
+                                    onClick={() => {
+                                        setSelectedEvent(null);
+                                        navigate('/live-session');
+                                    }}
                                     className="inline-block px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors text-sm font-medium"
                                 >
                                     Join Meeting 🎥
-                                </a>
+                                </button>
                             )}
 
                             {user?.role === 'student' && selectedEvent.type === 'Assignment' && (
