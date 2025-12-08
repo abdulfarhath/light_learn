@@ -8,7 +8,8 @@ const Schedule = () => {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [showAssignment, setShowAssignment] = useState(false);
     
-    const events = [
+    // Student events
+    const studentEvents = [
         {
             id: 1,
             title: 'Advanced React Patterns',
@@ -49,6 +50,49 @@ const Schedule = () => {
         }
     ];
 
+    // Teacher events
+    const teacherEvents = [
+        {
+            id: 1,
+            title: 'Conduct Advanced React Patterns Class',
+            type: 'Live Session',
+            time: '10:00 AM - 11:30 AM',
+            date: 'Today',
+            class: 'Advanced Programming',
+            status: 'upcoming',
+            color: 'primary',
+            description: 'Live teaching session on React patterns. Expected 45 students.',
+            location: 'Room 301',
+            meetingLink: 'https://meet.example.com/react101'
+        },
+        {
+            id: 2,
+            title: 'Review System Design Submissions',
+            type: 'Grading Deadline',
+            time: '11:59 PM',
+            date: 'Tomorrow',
+            class: 'System Design Course',
+            status: 'pending',
+            color: 'warning',
+            description: 'Review and grade 30 student submissions for the System Design project.',
+            studentCount: 30
+        },
+        {
+            id: 3,
+            title: 'Final Exam Proctoring',
+            type: 'Exam',
+            time: '2:00 PM - 4:00 PM',
+            date: 'Dec 16, 2023',
+            class: 'Data Structures',
+            status: 'pending',
+            color: 'danger',
+            description: 'Proctor final examination for Data Structures course.',
+            location: 'Exam Hall B'
+        }
+    ];
+
+    const events = user?.role === 'teacher' ? teacherEvents : studentEvents;
+
     return (
         <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 max-w-7xl mx-auto w-full no-scrollbar">
             <div className="flex flex-col gap-2">
@@ -82,10 +126,26 @@ const Schedule = () => {
                                 <p className="text-text-main mt-1">{selectedEvent.description}</p>
                             </div>
                             
-                            <div>
-                                <label className="text-sm font-semibold text-text-secondary">Instructor</label>
-                                <p className="text-text-main mt-1">👨‍🏫 {selectedEvent.instructor}</p>
-                            </div>
+                            {user?.role === 'student' && selectedEvent.instructor && (
+                                <div>
+                                    <label className="text-sm font-semibold text-text-secondary">Instructor</label>
+                                    <p className="text-text-main mt-1">👨‍🏫 {selectedEvent.instructor}</p>
+                                </div>
+                            )}
+
+                            {user?.role === 'teacher' && selectedEvent.class && (
+                                <div>
+                                    <label className="text-sm font-semibold text-text-secondary">Class</label>
+                                    <p className="text-text-main mt-1">🎓 {selectedEvent.class}</p>
+                                </div>
+                            )}
+
+                            {user?.role === 'teacher' && selectedEvent.studentCount && (
+                                <div>
+                                    <label className="text-sm font-semibold text-text-secondary">Students</label>
+                                    <p className="text-text-main mt-1">👥 {selectedEvent.studentCount} students</p>
+                                </div>
+                            )}
                             
                             {selectedEvent.location && (
                                 <div>
@@ -112,7 +172,7 @@ const Schedule = () => {
                                 </a>
                             )}
 
-                            {selectedEvent.type === 'Assignment' && (
+                            {user?.role === 'student' && selectedEvent.type === 'Assignment' && (
                                 <button
                                     onClick={() => setShowAssignment(true)}
                                     className="inline-block px-4 py-2 bg-success text-white rounded-lg hover:bg-success-dark transition-colors text-sm font-medium"
@@ -146,7 +206,10 @@ const Schedule = () => {
                             <div key={event.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl bg-bg-dark border border-border hover:border-primary/30 transition-all gap-4">
                                 <div className="flex items-start gap-4">
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${colorStyles[event.color]}`}>
-                                        {event.type === 'Live Class' ? '🎥' : event.type === 'Quiz Deadline' ? '📝' : '📤'}
+                                        {user?.role === 'teacher' 
+                                            ? (event.type === 'Live Session' ? '📡' : event.type === 'Grading Deadline' ? '✅' : '📋')
+                                            : (event.type === 'Live Class' ? '🎥' : event.type === 'Quiz Deadline' ? '📝' : '📤')
+                                        }
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-text-main text-lg">{event.title}</h3>
