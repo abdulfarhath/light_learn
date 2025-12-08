@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import Card from '../shared/components/Card';
 import useAuthStore from '../stores/authStore';
+import AssignmentModal from '../components/AssignmentModal';
 
 const Schedule = () => {
     const { user } = useAuthStore();
     const [selectedEvent, setSelectedEvent] = useState(null);
+    const [showAssignment, setShowAssignment] = useState(false);
     
     const events = [
         {
@@ -58,7 +60,7 @@ const Schedule = () => {
                 </p>
             </div>
 
-            {selectedEvent && (
+            {selectedEvent && !showAssignment && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <Card className="max-w-2xl w-full">
                         <div className="flex justify-between items-start mb-4">
@@ -110,15 +112,13 @@ const Schedule = () => {
                                 </a>
                             )}
 
-                            {selectedEvent.submissionLink && (
-                                <a
-                                    href={selectedEvent.submissionLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                            {selectedEvent.type === 'Assignment' && (
+                                <button
+                                    onClick={() => setShowAssignment(true)}
                                     className="inline-block px-4 py-2 bg-success text-white rounded-lg hover:bg-success-dark transition-colors text-sm font-medium"
                                 >
-                                    Submit Project 📤
-                                </a>
+                                    Enter Assignment 📝
+                                </button>
                             )}
                         </div>
                         
@@ -179,6 +179,16 @@ const Schedule = () => {
                     })}
                 </div>
             </Card>
+
+            {showAssignment && (
+                <AssignmentModal
+                    assignment={selectedEvent}
+                    onClose={() => {
+                        setShowAssignment(false);
+                        setSelectedEvent(null);
+                    }}
+                />
+            )}
         </div>
     );
 };
