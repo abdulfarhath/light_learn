@@ -1,4 +1,4 @@
-const db = require('../../config/database');
+const db = require('../../shared/config/database');
 const aiService = require('../ai/ai.service');
 
 const getAllDoubts = async () => {
