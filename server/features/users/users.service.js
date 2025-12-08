@@ -1,6 +1,6 @@
 // Make sure this path points to your database config
-// It might be require('../../config/database') or require('../../shared/config/database')
-const pool = require('../../config/database');
+// Database connection pool
+const pool = require('../../shared/config/database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
