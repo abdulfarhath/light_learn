@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Card from '../shared/components/Card';
 import useAuthStore from '../stores/authStore';
 
 const Schedule = () => {
     const { user } = useAuthStore();
+    const [selectedEvent, setSelectedEvent] = useState(null);
     
     const events = [
         {
@@ -14,7 +15,10 @@ const Schedule = () => {
             date: 'Today',
             instructor: 'Dr. Sarah Wilson',
             status: 'upcoming',
-            color: 'primary'
+            color: 'primary',
+            description: 'Explore advanced React patterns including render props, custom hooks, and performance optimization techniques.',
+            location: 'Room 301',
+            meetingLink: 'https://meet.example.com/react101'
         },
         {
             id: 2,
@@ -24,7 +28,10 @@ const Schedule = () => {
             date: 'Tomorrow',
             instructor: 'Prof. Michael Chen',
             status: 'pending',
-            color: 'warning'
+            color: 'warning',
+            description: 'Quiz covering fundamental system design principles, scalability, and architecture patterns.',
+            totalQuestions: 20,
+            duration: '60 minutes'
         },
         {
             id: 3,
@@ -34,7 +41,9 @@ const Schedule = () => {
             date: 'Dec 15, 2023',
             instructor: 'Dr. Sarah Wilson',
             status: 'pending',
-            color: 'danger'
+            color: 'danger',
+            description: 'Submit your final project including documentation, source code, and a live demo.',
+            submissionLink: 'https://classroom.example.com/submit'
         }
     ];
 
@@ -48,6 +57,80 @@ const Schedule = () => {
                     {user?.role === 'teacher' ? 'Manage your upcoming sessions and deadlines' : 'Keep track of your classes and assignments'}
                 </p>
             </div>
+
+            {selectedEvent && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <Card className="max-w-2xl w-full">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 className="text-2xl font-bold text-text-main mb-2">{selectedEvent.title}</h2>
+                                <p className="text-text-muted">{selectedEvent.date} • {selectedEvent.time}</p>
+                            </div>
+                            <button
+                                onClick={() => setSelectedEvent(null)}
+                                className="text-text-muted hover:text-text-main text-2xl"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="text-sm font-semibold text-text-secondary">Description</label>
+                                <p className="text-text-main mt-1">{selectedEvent.description}</p>
+                            </div>
+                            
+                            <div>
+                                <label className="text-sm font-semibold text-text-secondary">Instructor</label>
+                                <p className="text-text-main mt-1">👨‍🏫 {selectedEvent.instructor}</p>
+                            </div>
+                            
+                            {selectedEvent.location && (
+                                <div>
+                                    <label className="text-sm font-semibold text-text-secondary">Location</label>
+                                    <p className="text-text-main mt-1">📍 {selectedEvent.location}</p>
+                                </div>
+                            )}
+                            
+                            {selectedEvent.totalQuestions && (
+                                <div>
+                                    <label className="text-sm font-semibold text-text-secondary">Quiz Details</label>
+                                    <p className="text-text-main mt-1">📝 {selectedEvent.totalQuestions} questions • {selectedEvent.duration}</p>
+                                </div>
+                            )}
+
+                            {selectedEvent.meetingLink && (
+                                <a
+                                    href={selectedEvent.meetingLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-block px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors text-sm font-medium"
+                                >
+                                    Join Meeting 🎥
+                                </a>
+                            )}
+
+                            {selectedEvent.submissionLink && (
+                                <a
+                                    href={selectedEvent.submissionLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-block px-4 py-2 bg-success text-white rounded-lg hover:bg-success-dark transition-colors text-sm font-medium"
+                                >
+                                    Submit Project 📤
+                                </a>
+                            )}
+                        </div>
+                        
+                        <button
+                            onClick={() => setSelectedEvent(null)}
+                            className="w-full px-4 py-2 bg-bg-dark border border-border text-text-main rounded-lg hover:bg-bg-hover transition-colors font-medium"
+                        >
+                            Close
+                        </button>
+                    </Card>
+                </div>
+            )}
 
             <Card className="w-full">
                 <div className="flex flex-col gap-4">
@@ -84,7 +167,10 @@ const Schedule = () => {
                                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${colorStyles[event.color]}`}>
                                         {event.type}
                                     </span>
-                                    <button className="px-4 py-2 rounded-lg bg-bg-panel border border-border text-text-main hover:bg-bg-hover transition-colors text-sm font-medium">
+                                    <button 
+                                        onClick={() => setSelectedEvent(event)}
+                                        className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary-dark transition-colors text-sm font-medium"
+                                    >
                                         View Details
                                     </button>
                                 </div>

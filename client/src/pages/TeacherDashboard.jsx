@@ -123,36 +123,13 @@ const TeacherDashboard = () => {
     return (
         <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 max-w-7xl mx-auto w-full no-scrollbar">
             <div className="flex flex-col gap-6">
-                {/* Welcome Section */}
-                <div className="bg-gradient-to-r from-primary to-accent p-10 rounded-2xl text-center text-white shadow-lg animate-slide-up relative overflow-hidden">
+                {/* Welcome Section - Compact */}
+                <div className="bg-gradient-to-r from-primary to-accent p-4 rounded-xl text-center text-white shadow-lg animate-slide-up relative overflow-hidden w-fit mx-auto">
                     <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]"></div>
                     <div className="relative z-10">
-                        <div className="mb-6">
-                            <h1 className="text-3xl font-bold mb-2">
-                                Welcome back, <span className="text-white">{user?.full_name}</span>! 👋
-                            </h1>
-                            <p className="text-lg opacity-90 max-w-2xl mx-auto">
-                                Ready to inspire and educate your students today?
-                            </p>
-                        </div>
-                        <div className="flex gap-4 flex-wrap justify-center">
-                            <Button
-                                variant="primary"
-                                size="large"
-                                onClick={() => navigate('/live-session')}
-                                className="bg-white text-primary hover:bg-gray-100 border-none shadow-xl"
-                            >
-                                🎥 Start Live Session
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                size="large"
-                                onClick={() => navigate('/classes')}
-                                className="bg-white/10 backdrop-blur-md border border-white/30 text-white hover:bg-white/20"
-                            >
-                                🎓 My Classes
-                            </Button>
-                        </div>
+                        <p className="text-sm font-semibold opacity-90">
+                            Welcome back, <span className="font-bold">{user?.full_name}</span>! 👋
+                        </p>
                     </div>
                 </div>
 
