@@ -15,12 +15,14 @@ const classesModule = require('./features/classes');
 const coursesModule = require('./features/courses');
 const liveSessionsModule = require('./features/live-sessions');
 const resourcesModule = require('./features/resources');
+const doubtsModule = require('./features/doubts');
 
 // Mount feature routes
 app.use('/api/auth', authModule.routes);
 app.use('/api/users', usersModule.routes);
 app.use('/api/classes', classesModule.routes);
 app.use('/api/courses', coursesModule.routes);
+app.use('/api/doubts', doubtsModule.routes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

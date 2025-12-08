@@ -160,3 +160,34 @@ CREATE INDEX IF NOT EXISTS idx_subjects_year_semester ON subjects(year, semester
 -- Trigger for subjects table
 CREATE TRIGGER update_subjects_updated_at BEFORE UPDATE ON subjects
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- ============================================
+-- DOUBTS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS doubts (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    class_id INTEGER REFERENCES classes(id) ON DELETE SET NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    priority VARCHAR(20) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+    status VARCHAR(20) DEFAULT 'unresolved' CHECK (status IN ('resolved', 'unresolved')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_doubts_student_id ON doubts(student_id);
+CREATE INDEX IF NOT EXISTS idx_doubts_class_id ON doubts(class_id);
+
+-- ============================================
+-- DOUBT ANSWERS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS doubt_answers (
+    id SERIAL PRIMARY KEY,
+    doubt_id INTEGER NOT NULL REFERENCES doubts(id) ON DELETE CASCADE,
+    author_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_doubt_answers_doubt_id ON doubt_answers(doubt_id);
+

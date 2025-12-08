@@ -1,88 +1,81 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useAuthStore from '../../../stores/authStore';
 import DoubtList from '../components/DoubtList';
 import DoubtForm from '../components/DoubtForm';
+import { fetchDoubts, createDoubt, postAnswer, updateDoubtStatus } from '../services/doubtAPI';
+import { classAPI } from '../../classes/services/classAPI';
 
 const DoubtsPage = () => {
     const { user } = useAuthStore();
     const [showForm, setShowForm] = useState(false);
+    const [doubts, setDoubts] = useState([]);
+    const [myClasses, setMyClasses] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock data for doubts - in a real app this would come from an API
-    const [doubts, setDoubts] = useState([
-        {
-            id: 1,
-            studentName: 'Alice Johnson',
-            title: 'Confusion about React Hooks',
-            description: 'I am not sure when to use useEffect vs useLayoutEffect. Can someone explain?',
-            course: 'Advanced Web Development',
-            timestamp: '2023-10-25T10:30:00',
-            status: 'unresolved',
-            answers: [
-                {
-                    id: 101,
-                    authorName: 'Mr. Smith',
-                    role: 'teacher',
-                    content: 'useEffect runs asynchronously after render, while useLayoutEffect runs synchronously after DOM mutations but before paint.',
-                    type: 'text', // text, audio, video, image
-                    timestamp: '2023-10-25T11:00:00'
-                }
-            ]
-        },
-        {
-            id: 2,
-            studentName: 'Bob Williams',
-            title: 'Database Normalization',
-            description: 'How do I decide between 3NF and BCNF?',
-            course: 'Database Systems',
-            timestamp: '2023-10-26T09:15:00',
-            status: 'resolved',
-            answers: []
-        }
-    ]);
-
-    const handleAddDoubt = (newDoubt) => {
-        const doubt = {
-            id: doubts.length + 1,
-            studentName: user.full_name,
-            timestamp: new Date().toISOString(),
-            status: 'unresolved',
-            answers: [],
-            ...newDoubt
+    // 1. Fetch doubts and classes from backend on load
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const [doubtsData, classesData] = await Promise.all([
+                    fetchDoubts(),
+                    classAPI.getMyClasses(user.role)
+                ]);
+                setDoubts(doubtsData);
+                setMyClasses(classesData);
+            } catch (error) {
+                console.error("Failed to load data", error);
+            } finally {
+                setLoading(false);
+            }
         };
-        setDoubts([doubt, ...doubts]);
-        setShowForm(false);
+        loadData();
+    }, [user.role]);
+
+    const loadDoubts = async () => {
+        try {
+            const data = await fetchDoubts();
+            setDoubts(data);
+        } catch (error) {
+            console.error("Failed to load doubts", error);
+        }
     };
 
-    const handleAddAnswer = (doubtId, answer) => {
-        const updatedDoubts = doubts.map(d => {
-            if (d.id === doubtId) {
-                return {
-                    ...d,
-                    answers: [...d.answers, {
-                        id: Date.now(),
-                        authorName: user.full_name,
-                        role: user.role,
-                        timestamp: new Date().toISOString(),
-                        ...answer
-                    }]
-                };
-            }
-            return d;
-        });
-        setDoubts(updatedDoubts);
+    // 2. Handle adding a new doubt
+    const handleAddDoubt = async (newDoubtData) => {
+        try {
+            await createDoubt(newDoubtData);
+            setShowForm(false);
+            loadDoubts(); // Refresh list
+        } catch (error) {
+            console.error("Failed to post doubt", error);
+        }
     };
 
-    const handleToggleStatus = (doubtId) => {
-        setDoubts(doubts.map(d => {
-            if (d.id === doubtId) {
-                return {
-                    ...d,
-                    status: d.status === 'resolved' ? 'unresolved' : 'resolved'
-                };
-            }
-            return d;
-        }));
+    // 3. Handle adding an answer (Teachers only)
+    const handleAddAnswer = async (doubtId, answerData) => {
+        try {
+            await postAnswer(doubtId, answerData.content);
+            loadDoubts(); // Refresh to show new answer
+        } catch (error) {
+            console.error("Failed to post answer", error);
+        }
     };
+
+    // 4. Handle status toggle (Student only)
+    const handleToggleStatus = async (doubtId) => {
+        // Find current status to toggle it
+        const doubt = doubts.find(d => d.id === doubtId);
+        const newStatus = doubt.status === 'resolved' ? 'unresolved' : 'resolved';
+        
+        try {
+            await updateDoubtStatus(doubtId, newStatus);
+            loadDoubts(); // Refresh list
+        } catch (error) {
+            console.error("Failed to update status", error);
+        }
+    };
+
+    if (loading) return <div className="p-6">Loading doubts...</div>;
 
     return (
         <div className="flex-1 p-6 overflow-y-auto w-full max-w-7xl mx-auto">
@@ -104,7 +97,11 @@ const DoubtsPage = () => {
             {showForm && (
                 <div className="mb-8 bg-bg-panel border border-border rounded-xl p-6 shadow-lg">
                     <h2 className="text-xl font-semibold text-text-main mb-4">Post a New Doubt</h2>
-                    <DoubtForm onSubmit={handleAddDoubt} onCancel={() => setShowForm(false)} />
+                    <DoubtForm 
+                        onSubmit={handleAddDoubt} 
+                        onCancel={() => setShowForm(false)} 
+                        availableClasses={myClasses}
+                    />
                 </div>
             )}
 

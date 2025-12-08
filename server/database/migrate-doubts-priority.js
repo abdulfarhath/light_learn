@@ -1,0 +1,29 @@
+const { Pool } = require('pg');
+require('dotenv').config();
+
+const pool = new Pool({
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    database: process.env.DB_NAME || 'learning_platform',
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+});
+
+async function migrate() {
+    try {
+        console.log('Running doubts priority migration...');
+        
+        await pool.query(`
+            ALTER TABLE doubts 
+            ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high'));
+        `);
+        
+        console.log('Doubts priority migration completed successfully.');
+    } catch (error) {
+        console.error('Migration failed:', error);
+    } finally {
+        await pool.end();
+    }
+}
+
+migrate();

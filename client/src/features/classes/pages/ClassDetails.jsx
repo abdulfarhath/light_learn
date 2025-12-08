@@ -1,72 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../../../shared/components/Card';
 import Button from '../../../shared/components/Button';
 import DoubtList from '../../doubts/components/DoubtList';
 import DoubtForm from '../../doubts/components/DoubtForm';
 import useAuthStore from '../../../stores/authStore';
+import { fetchDoubts, createDoubt, postAnswer, updateDoubtStatus } from '../../doubts/services/doubtAPI';
 
 const ClassDetails = ({ classData, onBack, role }) => {
     const { user } = useAuthStore();
     const [activeTab, setActiveTab] = useState('recordings');
     const [showDoubtForm, setShowDoubtForm] = useState(false);
+    const [classDoubts, setClassDoubts] = useState([]);
+    const [loadingDoubts, setLoadingDoubts] = useState(false);
 
-    // Mock data for doubts specific to this class
-    const [classDoubts, setClassDoubts] = useState([
-        {
-            id: 1,
-            studentName: 'Alice Johnson',
-            title: 'Question about last lecture',
-            description: 'Can you explain the state management part again?',
-            course: classData.class_name,
-            timestamp: '2023-10-25T10:30:00',
-            status: 'unresolved',
-            answers: []
+    useEffect(() => {
+        if (activeTab === 'doubts') {
+            loadClassDoubts();
         }
-    ]);
+    }, [activeTab, classData.id]);
 
-    const handleAddDoubt = (newDoubt) => {
-        const doubt = {
-            id: classDoubts.length + 1,
-            studentName: user.full_name,
-            timestamp: new Date().toISOString(),
-            status: 'unresolved',
-            answers: [],
-            ...newDoubt,
-            course: classData.class_name
-        };
-        setClassDoubts([doubt, ...classDoubts]);
-        setShowDoubtForm(false);
+    const loadClassDoubts = async () => {
+        setLoadingDoubts(true);
+        try {
+            const allDoubts = await fetchDoubts();
+            // Filter doubts for this class
+            const filtered = allDoubts.filter(d => d.class_id === classData.id);
+            setClassDoubts(filtered);
+        } catch (error) {
+            console.error("Failed to load doubts", error);
+        } finally {
+            setLoadingDoubts(false);
+        }
     };
 
-    const handleAddAnswer = (doubtId, answer) => {
-        const updatedDoubts = classDoubts.map(d => {
-            if (d.id === doubtId) {
-                return {
-                    ...d,
-                    answers: [...d.answers, {
-                        id: Date.now(),
-                        authorName: user.full_name,
-                        role: user.role,
-                        timestamp: new Date().toISOString(),
-                        ...answer
-                    }]
-                };
-            }
-            return d;
-        });
-        setClassDoubts(updatedDoubts);
+    const handleAddDoubt = async (newDoubt) => {
+        try {
+            await createDoubt({
+                ...newDoubt,
+                classId: classData.id
+            });
+            setShowDoubtForm(false);
+            loadClassDoubts();
+        } catch (error) {
+            console.error("Failed to create doubt", error);
+        }
     };
 
-    const handleToggleStatus = (doubtId) => {
-        setClassDoubts(classDoubts.map(d => {
-            if (d.id === doubtId) {
-                return {
-                    ...d,
-                    status: d.status === 'resolved' ? 'unresolved' : 'resolved'
-                };
-            }
-            return d;
-        }));
+    const handleAddAnswer = async (doubtId, answer) => {
+        try {
+            await postAnswer(doubtId, answer.content);
+            loadClassDoubts();
+        } catch (error) {
+            console.error("Failed to add answer", error);
+        }
+    };
+
+    const handleToggleStatus = async (doubtId) => {
+        const doubt = classDoubts.find(d => d.id === doubtId);
+        const newStatus = doubt.status === 'resolved' ? 'unresolved' : 'resolved';
+        try {
+            await updateDoubtStatus(doubtId, newStatus);
+            loadClassDoubts();
+        } catch (error) {
+            console.error("Failed to toggle status", error);
+        }
     };
 
     // Dummy data for recordings (since we don't have a backend for this yet)

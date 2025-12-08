@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 
-const DoubtForm = ({ onSubmit, onCancel, courseId }) => {
+const DoubtForm = ({ onSubmit, onCancel, courseId, availableClasses = [] }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [course, setCourse] = useState(courseId || '');
+    const [selectedClassId, setSelectedClassId] = useState(courseId || '');
 
     const handleSubmit = (e) => {
         e.preventDefault();
         onSubmit({
             title,
             description,
-            course: course || 'General', // In a real app, this would be a course ID
+            classId: selectedClassId
         });
         setTitle('');
         setDescription('');
-        setCourse('');
+        setSelectedClassId('');
     };
 
     return (
@@ -31,18 +31,25 @@ const DoubtForm = ({ onSubmit, onCancel, courseId }) => {
                 />
             </div>
             
-            {!courseId && (
+            {/* Class selection removed for testing/automation phase */}
+            {/* {!courseId && (
                 <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Course/Subject</label>
-                    <input
-                        type="text"
-                        value={course}
-                        onChange={(e) => setCourse(e.target.value)}
-                        placeholder="e.g. React, Database, Math"
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Select Class/Subject</label>
+                    <select
+                        value={selectedClassId}
+                        onChange={(e) => setSelectedClassId(e.target.value)}
+                        required
                         className="w-full bg-bg-dark border border-border rounded-lg p-3 text-text-main focus:outline-none focus:border-primary"
-                    />
+                    >
+                        <option value="">-- Select a Class --</option>
+                        {availableClasses.map((cls) => (
+                            <option key={cls.id} value={cls.id}>
+                                {cls.class_name} ({cls.class_code}) - {cls.teacher_name}
+                            </option>
+                        ))}
+                    </select>
                 </div>
-            )}
+            )} */}
 
             <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Description</label>
