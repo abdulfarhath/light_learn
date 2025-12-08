@@ -35,12 +35,16 @@ const createDoubt = async (studentId, doubtData) => {
     // Handle empty string for classId (convert to null)
     const classIdValue = (classId === '' || classId === undefined) ? null : classId;
 
+    console.log('  📝 Inserting doubt into database:', { studentId, title, classIdValue });
+    
     const query = `
         INSERT INTO doubts (student_id, title, description, class_id, status)
         VALUES ($1, $2, $3, $4, 'unresolved')
         RETURNING *
     `;
     const result = await db.query(query, [studentId, title, description, classIdValue]); 
+    
+    console.log('  ✅ Doubt inserted:', result.rows[0]);
     
     // Trigger AI Answer (Fire and forget)
     const newDoubt = result.rows[0];

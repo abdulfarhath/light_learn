@@ -2,19 +2,26 @@ const doubtService = require('./doubts.service');
 
 const getDoubts = async (req, res) => {
     try {
+        console.log('📥 GET /doubts - Fetching all doubts');
         const doubts = await doubtService.getAllDoubts();
+        console.log(`✅ Found ${doubts.length} doubts`);
         res.json({ doubts });
     } catch (error) {
+        console.error('❌ Error fetching doubts:', error);
         res.status(500).json({ error: error.message });
     }
 };
 
 const createDoubt = async (req, res) => {
     try {
+        console.log('📤 POST /doubts - Creating new doubt');
+        console.log('  User ID:', req.user.id);
+        console.log('  Doubt data:', req.body);
         const doubt = await doubtService.createDoubt(req.user.id, req.body);
+        console.log(`✅ Doubt created with ID: ${doubt.id}`);
         res.status(201).json(doubt);
     } catch (error) {
-        console.error("Error creating doubt:", error);
+        console.error("❌ Error creating doubt:", error);
         res.status(500).json({ error: error.message });
     }
 };
