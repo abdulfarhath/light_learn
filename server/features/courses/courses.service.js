@@ -22,6 +22,17 @@ class CoursesService {
 
         return result.rows;
     }
+
+    async createSubject(subjectData) {
+        const { subject_name, subject_code, year, semester, branch, college } = subjectData;
+        const query = `
+            INSERT INTO subjects (subject_name, subject_code, year, semester, branch, college)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *
+        `;
+        const result = await pool.query(query, [subject_name, subject_code, year, semester, branch, college]);
+        return result.rows[0];
+    }
 }
 
 module.exports = new CoursesService();

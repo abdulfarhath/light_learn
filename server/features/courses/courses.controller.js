@@ -37,6 +37,28 @@ class CoursesController {
             return res.status(500).json({ error: 'Server error' });
         }
     }
+
+    async createSubject(req, res) {
+        try {
+            const { subject_name, subject_code, year, semester, branch, college } = req.body;
+
+            if (!subject_name || !subject_code || !year || !semester || !branch || !college) {
+                return res.status(400).json({ error: 'All fields are required' });
+            }
+
+            const subject = await coursesService.createSubject({
+                subject_name, subject_code, year, semester, branch, college
+            });
+
+            res.status(201).json({ subject });
+        } catch (error) {
+            console.error('Create subject error:', error);
+            if (error.code === '23505') { // Unique violation
+                return res.status(400).json({ error: 'Subject code already exists for this context' });
+            }
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
 }
 
 module.exports = new CoursesController();

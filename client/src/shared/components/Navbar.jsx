@@ -16,14 +16,27 @@ const Navbar = () => {
 
     const isActive = (path) => location.pathname === path;
 
-    const navLinks = [
+    const teacherLinks = [
         { path: '/dashboard', label: 'Dashboard', icon: '📊' },
+        { path: '/classes', label: 'My Classes', icon: '🏫' },
         { path: '/courses', label: 'Courses', icon: '📚' },
-
+        { path: '/doubts', label: 'Doubts', icon: '❓' },
         { path: '/schedule', label: 'Schedule', icon: '📅' },
         { path: '/live-session', label: 'Live Session', icon: '🎥' },
         { path: '/profile', label: 'Profile', icon: '👤' },
     ];
+
+    const studentLinks = [
+        { path: '/dashboard', label: 'Dashboard', icon: '📊' },
+        { path: '/classes', label: 'My Classes', icon: '📚' },
+        { path: '/courses', label: 'Courses', icon: '🔍' },
+        { path: '/doubts', label: 'Doubts', icon: '❓' },
+        { path: '/schedule', label: 'Schedule', icon: '📅' },
+        { path: '/live-session', label: 'Live Session', icon: '🎥' },
+        { path: '/profile', label: 'Profile', icon: '👤' },
+    ];
+
+    const navLinks = user?.role === 'teacher' ? teacherLinks : studentLinks;
 
     return (
         <>
@@ -83,13 +96,14 @@ const Navbar = () => {
                             </p>
                         </div>
                     </div>
+                    
                     <div className="flex gap-2">
                         <ThemeToggle />
-                        <button
+                        <button 
                             onClick={handleLogout}
-                            className="flex-1 py-2 px-4 bg-bg-dark border border-border rounded-lg text-text-secondary hover:text-text-main hover:bg-bg-hover transition-colors text-sm font-medium"
+                            className="flex-1 flex items-center justify-center gap-2 p-2 rounded-lg bg-bg-hover hover:bg-red-500/10 hover:text-red-500 transition-colors text-sm font-medium text-text-secondary"
                         >
-                            Logout
+                            <span>🚪</span> Logout
                         </button>
                     </div>
                 </div>
@@ -97,7 +111,7 @@ const Navbar = () => {
 
             {/* Overlay for mobile */}
             {mobileMenuOpen && (
-                <div
+                <div 
                     className="fixed inset-0 bg-black/50 z-30 md:hidden"
                     onClick={() => setMobileMenuOpen(false)}
                 />

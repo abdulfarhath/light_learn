@@ -5,7 +5,8 @@ import { ProtectedRoute } from './shared';
 import Layout from './shared/components/Layout';
 import { Login, Register } from './features/auth';
 import { Profile } from './features/users';
-
+import { Classes } from './features/classes';
+import DoubtsPage from './features/doubts/pages/DoubtsPage';
 import Dashboard from './pages/Dashboard';
 import Courses from './features/courses/pages/Courses';
 import SubjectDetails from './features/courses/pages/SubjectDetails';
@@ -44,6 +45,22 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <Courses />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/doubts"
+                        element={
+                            <ProtectedRoute>
+                                <DoubtsPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/classes"
+                        element={
+                            <ProtectedRoute>
+                                <Classes />
                             </ProtectedRoute>
                         }
                     />

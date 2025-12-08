@@ -21,13 +21,14 @@ function LiveSession() {
 
     // --- CLASSROOM STATE ---
     const [room, setRoom] = useState("");
-    const [username, setUsername] = useState("");
+    const [username, setUsername] = useState(user?.full_name || "");
     const [role, setRole] = useState(user?.role || "student");
 
     const [isJoined, setIsJoined] = useState(false);
     const [isConnected, setIsConnected] = useState(socket.connected);
     const [isLive, setIsLive] = useState(false);
     const [audioActive, setAudioActive] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
 
     // Tools
     const [tool, setTool] = useState("pen");
@@ -41,7 +42,10 @@ function LiveSession() {
     const [totalPages, setTotalPages] = useState(0);
 
     // QUIZ STATE
-    const [savedQuizzes, setSavedQuizzes] = useState([]);
+    const [savedQuizzes, setSavedQuizzes] = useState([
+        { id: 1, question: "What is React?", options: ["Library", "Framework", "Language", "Database"], answer: 0 },
+        { id: 2, question: "What is 2+2?", options: ["3", "4", "5", "6"], answer: 1 }
+    ]);
     const [activeQuiz, setActiveQuiz] = useState(null);
     const [quizStats, setQuizStats] = useState({ A: 0, B: 0, C: 0, D: 0 });
     const [showLaunchPad, setShowLaunchPad] = useState(false);
@@ -115,12 +119,30 @@ function LiveSession() {
             setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
         });
 
+        socket.on("recording_status", (data) => {
+            setIsRecording(data.isRecording);
+            
+            // If recording started AND we are streaming audio, restart recorder to send header
+            if (data.isRecording && audioLoopRef.current && myVideo.current && myVideo.current.srcObject) {
+                // Stop old recorder if running
+                try {
+                    if (audioLoopRef.current.state !== 'inactive') {
+                        audioLoopRef.current.stop();
+                    }
+                } catch (e) { console.error(e); }
+
+                // Start new recorder to generate fresh header
+                const stream = myVideo.current.srcObject;
+                startAudioRecorder(stream);
+            }
+        });
+
         return () => {
             socket.off('connect'); socket.off('disconnect');
             socket.off("receive_video_frame"); socket.off("receive_audio_stream");
             socket.off("receive_draw_data"); socket.off("receive_background_image");
             socket.off("receive_quiz"); socket.off("receive_answer"); socket.off("board_access_changed");
-            socket.off("receive_message");
+            socket.off("receive_message"); socket.off("recording_status");
         };
     }, [isJoined, role]);
 
@@ -137,6 +159,14 @@ function LiveSession() {
         const newState = !studentDrawAllowed;
         setStudentDrawAllowed(newState);
         socket.emit("toggle_board_access", { room, allowStudentsToDraw: newState });
+    };
+
+    const toggleRecording = () => {
+        if (isRecording) {
+            socket.emit("stop_recording", { room });
+        } else {
+            socket.emit("start_recording", { room });
+        }
     };
 
     const launchQuiz = (quiz) => {
@@ -162,8 +192,58 @@ function LiveSession() {
     };
 
     const initAudioEngine = () => { if (!audioCtx) { const AudioContext = window.AudioContext || window.webkitAudioContext; audioCtx = new AudioContext(); } if (audioCtx.state === 'suspended') audioCtx.resume(); setAudioActive(true); alert("Audio Enabled!"); };
-    const startLiveClass = async () => { try { const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); if (myVideo.current) myVideo.current.srcObject = stream; setIsLive(true); setAudioActive(true); startVideoSnapshots(stream); startAudioRecorder(stream); } catch (err) { alert("Mic denied!"); } };
-    const startAudioRecorder = (stream) => { if (!stream.active) return; let recorder = new MediaRecorder(stream); recorder.ondataavailable = async (e) => { if (e.data.size > 0 && socket.connected) { const ab = await e.data.arrayBuffer(); socket.emit("audio_stream", { room, audio: ab }); } }; recorder.start(); audioLoopRef.current = setTimeout(() => { if (recorder.state === "recording") recorder.stop(); if (stream.active) startAudioRecorder(stream); }, 1000); };
+    const startLiveClass = async () => { 
+        try { 
+            // OPTIMIZATION: Request low-bandwidth audio constraints
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: true, 
+                audio: {
+                    sampleRate: 16000, // 16kHz is sufficient for voice
+                    channelCount: 1,   // Mono audio saves bandwidth
+                    echoCancellation: true,
+                    noiseSuppression: true
+                } 
+            }); 
+            if (myVideo.current) myVideo.current.srcObject = stream; 
+            setIsLive(true); 
+            setAudioActive(true); 
+            startVideoSnapshots(stream); 
+            startAudioRecorder(stream); 
+        } catch (err) { 
+            alert("Mic denied!"); 
+        } 
+    };
+    const startAudioRecorder = (stream) => { 
+        if (!stream.active) return; 
+        
+        // OPTIMIZATION: Use Opus codec with low bitrate (Target ~8-12kbps)
+        const options = {
+            audioBitsPerSecond: 12000, 
+        };
+        
+        // Prefer Opus if available (Standard for high quality at low bitrate)
+        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+            options.mimeType = "audio/webm;codecs=opus";
+        }
+
+        // Use a single recorder instance with timeslice
+        const recorder = new MediaRecorder(stream, options); 
+        
+        recorder.ondataavailable = async (e) => { 
+            if (e.data.size > 0 && socket.connected) { 
+                const ab = await e.data.arrayBuffer(); 
+                socket.emit("audio_stream", { room, audio: ab }); 
+            } 
+        }; 
+        
+        // Start recording and fire dataavailable every 1000ms
+        // This ensures the first chunk has the header and subsequent chunks are continuous
+        recorder.start(1000); 
+        
+        // Store recorder in ref to stop it if needed (optional but good practice)
+        // We reuse audioLoopRef to store the recorder instance instead of a timeout ID
+        audioLoopRef.current = recorder;
+    };
     const startVideoSnapshots = (stream) => { const canvas = document.createElement('canvas'); canvas.width = 160; canvas.height = 120; const ctx = canvas.getContext('2d'); snapshotIntervalRef.current = setInterval(() => { if (!myVideo.current) return; try { ctx.drawImage(myVideo.current, 0, 0, canvas.width, canvas.height); const dataURL = canvas.toDataURL('image/jpeg', 0.1); socket.emit("video_frame", { room, image: dataURL }); } catch (e) { } }, 1000); };
     const handleFileUpload = async (e) => { const file = e.target.files[0]; if (!file) return; if (file.type === "application/pdf") { const reader = new FileReader(); reader.readAsArrayBuffer(file); reader.onload = async (event) => { try { const loadingTask = getDocument(event.target.result); const pdf = await loadingTask.promise; setPdfDoc(pdf); setTotalPages(pdf.numPages); setPageNum(1); renderPdfPage(pdf, 1); } catch (err) { alert("PDF Error: " + err.message); } }; } else { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = (evt) => processAndSendImage(evt.target.result); } };
     const renderPdfPage = async (pdf, num) => { const page = await pdf.getPage(num); const viewport = page.getViewport({ scale: 1.5 }); const canvas = document.createElement("canvas"); const context = canvas.getContext("2d"); canvas.height = viewport.height; canvas.width = viewport.width; await page.render({ canvasContext: context, viewport }).promise; processAndSendImage(canvas.toDataURL("image/jpeg", 0.7)); };
@@ -180,13 +260,46 @@ function LiveSession() {
     if (!isJoined) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-bg-dark text-text-main p-4">
-                <h1 className="text-3xl font-bold mb-8">Join Session</h1>
-                <div className="w-full max-w-xs space-y-4">
-                    <input className="w-full bg-bg-panel border border-border rounded p-3 text-text-main" placeholder="Name" onChange={(e) => setUsername(e.target.value)} />
-                    <input className="w-full bg-bg-panel border border-border rounded p-3 text-white" placeholder="Room ID" onChange={(e) => setRoom(e.target.value)} />
-                    <button className="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded transition-colors font-medium" onClick={handleJoin}>
-                        Join as {user?.role === 'teacher' ? 'Teacher' : 'Student'}
-                    </button>
+                <div className="w-full max-w-md bg-bg-panel p-8 rounded-xl shadow-2xl border border-border">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold mb-2">
+                            {user?.role === 'teacher' ? 'Start Live Session' : 'Join Live Session'}
+                        </h1>
+                        <p className="text-text-muted">
+                            {user?.role === 'teacher' 
+                                ? 'Create a room for your students to join' 
+                                : 'Enter the room ID provided by your teacher'}
+                        </p>
+                    </div>
+                    
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary mb-1">Your Name</label>
+                            <input 
+                                className="w-full bg-bg-dark border border-border rounded-lg p-3 text-text-main focus:outline-none focus:border-primary" 
+                                placeholder="Name" 
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)} 
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary mb-1">Room ID</label>
+                            <input 
+                                className="w-full bg-bg-dark border border-border rounded-lg p-3 text-text-main focus:outline-none focus:border-primary" 
+                                placeholder="e.g. MATH101" 
+                                value={room}
+                                onChange={(e) => setRoom(e.target.value)} 
+                            />
+                        </div>
+
+                        <button 
+                            className="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-lg transition-colors font-bold text-lg shadow-lg mt-4" 
+                            onClick={handleJoin}
+                        >
+                            {user?.role === 'teacher' ? '🚀 Start Session' : '👋 Join Session'}
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -230,6 +343,14 @@ function LiveSession() {
                             ))}
                         </div>
 
+                        {/* Recording Indicator */}
+                        {isRecording && (
+                            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse shadow-lg z-20 flex items-center gap-2">
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                                REC
+                            </div>
+                        )}
+
                         {/* Mobile Toolbar - Bottom Center */}
                         <div className="md:hidden absolute bottom-4 left-1/2 -translate-x-1/2 bg-bg-panel border border-border p-3 rounded-full flex gap-3 shadow-lg z-10">
                             <div className={`w-11 h-11 flex items-center justify-center rounded-full cursor-pointer text-lg ${tool === 'pen' ? 'bg-primary text-white' : 'hover:bg-bg-hover'}`} onClick={() => setTool('pen')}>✎</div>
@@ -261,11 +382,15 @@ function LiveSession() {
                 <div className="flex md:flex-col gap-2">
                     <div className="relative flex-1 md:flex-none aspect-video bg-black rounded-lg overflow-hidden border border-border">
                         <video ref={myVideo} autoPlay muted playsInline className="w-full h-full object-cover" />
-                        <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Me ({role})</div>
+                        <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs text-white">
+                            {role === 'teacher' ? 'My Camera (Teacher)' : 'My Camera'}
+                        </div>
                     </div>
                     <div className="relative flex-1 md:flex-none aspect-video bg-black rounded-lg overflow-hidden border border-border">
                         <img ref={userImage} className="w-full h-full object-cover" alt="Peer" />
-                        <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Teacher Stream</div>
+                        <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs text-white">
+                            {role === 'teacher' ? 'Student Stream' : 'Teacher Stream'}
+                        </div>
                     </div>
                 </div>
 
@@ -302,6 +427,9 @@ function LiveSession() {
                     {role === 'teacher' && (
                         <>
                             <button className={`w-full py-3 md:py-2 rounded text-base md:text-sm font-medium transition-colors ${studentDrawAllowed ? 'bg-danger text-white' : 'bg-success text-white'}`} onClick={toggleBoardAccess}>{studentDrawAllowed ? '🔒 Lock Board' : '🔓 Unlock Board'}</button>
+                            <button className={`w-full py-3 md:py-2 rounded text-base md:text-sm font-medium transition-colors ${isRecording ? 'bg-red-600 text-white animate-pulse' : 'bg-bg-dark border border-border hover:bg-bg-hover'}`} onClick={toggleRecording}>
+                                {isRecording ? '⏹ Stop Recording' : '⏺ Start Recording'}
+                            </button>
                             <button className="w-full py-3 md:py-2 rounded text-base md:text-sm font-medium bg-bg-dark border border-border hover:bg-bg-hover transition-colors" onClick={() => fileInputRef.current.click()}>⬆ Share Slide</button>
                             <input type="file" accept="image/*,application/pdf" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
                             <button className="w-full py-3 md:py-2 rounded text-base md:text-sm font-medium bg-primary hover:bg-primary-dark text-white transition-colors" onClick={() => setShowLaunchPad(!showLaunchPad)}>🚀 Quiz</button>
