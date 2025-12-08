@@ -21,7 +21,7 @@ function LiveSession() {
 
     // --- CLASSROOM STATE ---
     const [room, setRoom] = useState("");
-    const [username, setUsername] = useState("");
+    const [username, setUsername] = useState(user?.full_name || "");
     const [role, setRole] = useState(user?.role || "student");
 
     const [isJoined, setIsJoined] = useState(false);
@@ -41,7 +41,10 @@ function LiveSession() {
     const [totalPages, setTotalPages] = useState(0);
 
     // QUIZ STATE
-    const [savedQuizzes, setSavedQuizzes] = useState([]);
+    const [savedQuizzes, setSavedQuizzes] = useState([
+        { id: 1, question: "What is React?", options: ["Library", "Framework", "Language", "Database"], answer: 0 },
+        { id: 2, question: "What is 2+2?", options: ["3", "4", "5", "6"], answer: 1 }
+    ]);
     const [activeQuiz, setActiveQuiz] = useState(null);
     const [quizStats, setQuizStats] = useState({ A: 0, B: 0, C: 0, D: 0 });
     const [showLaunchPad, setShowLaunchPad] = useState(false);
@@ -180,13 +183,46 @@ function LiveSession() {
     if (!isJoined) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-bg-dark text-text-main p-4">
-                <h1 className="text-3xl font-bold mb-8">Join Session</h1>
-                <div className="w-full max-w-xs space-y-4">
-                    <input className="w-full bg-bg-panel border border-border rounded p-3 text-text-main" placeholder="Name" onChange={(e) => setUsername(e.target.value)} />
-                    <input className="w-full bg-bg-panel border border-border rounded p-3 text-white" placeholder="Room ID" onChange={(e) => setRoom(e.target.value)} />
-                    <button className="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded transition-colors font-medium" onClick={handleJoin}>
-                        Join as {user?.role === 'teacher' ? 'Teacher' : 'Student'}
-                    </button>
+                <div className="w-full max-w-md bg-bg-panel p-8 rounded-xl shadow-2xl border border-border">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold mb-2">
+                            {user?.role === 'teacher' ? 'Start Live Session' : 'Join Live Session'}
+                        </h1>
+                        <p className="text-text-muted">
+                            {user?.role === 'teacher' 
+                                ? 'Create a room for your students to join' 
+                                : 'Enter the room ID provided by your teacher'}
+                        </p>
+                    </div>
+                    
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary mb-1">Your Name</label>
+                            <input 
+                                className="w-full bg-bg-dark border border-border rounded-lg p-3 text-text-main focus:outline-none focus:border-primary" 
+                                placeholder="Name" 
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)} 
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary mb-1">Room ID</label>
+                            <input 
+                                className="w-full bg-bg-dark border border-border rounded-lg p-3 text-text-main focus:outline-none focus:border-primary" 
+                                placeholder="e.g. MATH101" 
+                                value={room}
+                                onChange={(e) => setRoom(e.target.value)} 
+                            />
+                        </div>
+
+                        <button 
+                            className="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-lg transition-colors font-bold text-lg shadow-lg mt-4" 
+                            onClick={handleJoin}
+                        >
+                            {user?.role === 'teacher' ? '🚀 Start Session' : '👋 Join Session'}
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -261,11 +297,15 @@ function LiveSession() {
                 <div className="flex md:flex-col gap-2">
                     <div className="relative flex-1 md:flex-none aspect-video bg-black rounded-lg overflow-hidden border border-border">
                         <video ref={myVideo} autoPlay muted playsInline className="w-full h-full object-cover" />
-                        <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Me ({role})</div>
+                        <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs text-white">
+                            {role === 'teacher' ? 'My Camera (Teacher)' : 'My Camera'}
+                        </div>
                     </div>
                     <div className="relative flex-1 md:flex-none aspect-video bg-black rounded-lg overflow-hidden border border-border">
                         <img ref={userImage} className="w-full h-full object-cover" alt="Peer" />
-                        <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Teacher Stream</div>
+                        <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs text-white">
+                            {role === 'teacher' ? 'Student Stream' : 'Teacher Stream'}
+                        </div>
                     </div>
                 </div>
 

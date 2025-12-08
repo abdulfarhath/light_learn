@@ -6,6 +6,7 @@ import Layout from './shared/components/Layout';
 import { Login, Register } from './features/auth';
 import { Profile } from './features/users';
 import { Classes } from './features/classes';
+import DoubtsPage from './features/doubts/pages/DoubtsPage';
 import Dashboard from './pages/Dashboard';
 import Courses from './pages/Courses';
 import LiveSession from './pages/LiveSession';
@@ -43,6 +44,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <Courses />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/doubts"
+                        element={
+                            <ProtectedRoute>
+                                <DoubtsPage />
                             </ProtectedRoute>
                         }
                     />

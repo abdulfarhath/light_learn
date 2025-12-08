@@ -147,12 +147,14 @@ const Classes = () => {
                                                     <span className="value">{cls.teacher_name}</span>
                                                 </div>
                                             )}
+                                            {user.role === 'teacher' && (
+                                                <div className="info-item">
+                                                    <span className="label">Students:</span>
+                                                    <span className="value">{cls.student_count || 0}</span>
+                                                </div>
+                                            )}
                                             <div className="info-item">
-                                                <span className="label">Students:</span>
-                                                <span className="value">{cls.student_count || 0}</span>
-                                            </div>
-                                            <div className="info-item">
-                                                <span className="label">Created:</span>
+                                                <span className="label">{user.role === 'teacher' ? 'Created:' : 'Joined:'}</span>
                                                 <span className="value">
                                                     {new Date(user.role === 'teacher' ? cls.created_at : cls.enrolled_at).toLocaleDateString()}
                                                 </span>

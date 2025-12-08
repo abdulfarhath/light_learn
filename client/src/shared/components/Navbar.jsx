@@ -16,14 +16,27 @@ const Navbar = () => {
 
     const isActive = (path) => location.pathname === path;
 
-    const navLinks = [
+    const teacherLinks = [
         { path: '/dashboard', label: 'Dashboard', icon: '📊' },
+        { path: '/classes', label: 'My Classes', icon: '🏫' },
         { path: '/courses', label: 'Courses', icon: '📚' },
-        { path: '/classes', label: 'Classes', icon: '🏫' },
+        { path: '/doubts', label: 'Doubts', icon: '❓' },
         { path: '/schedule', label: 'Schedule', icon: '📅' },
         { path: '/live-session', label: 'Live Session', icon: '🎥' },
         { path: '/profile', label: 'Profile', icon: '👤' },
     ];
+
+    const studentLinks = [
+        { path: '/dashboard', label: 'Dashboard', icon: '📊' },
+        { path: '/classes', label: 'My Classes', icon: '📚' },
+        { path: '/courses', label: 'Courses', icon: '🔍' },
+        { path: '/doubts', label: 'Doubts', icon: '❓' },
+        { path: '/schedule', label: 'Schedule', icon: '📅' },
+        { path: '/live-session', label: 'Live Session', icon: '🎥' },
+        { path: '/profile', label: 'Profile', icon: '👤' },
+    ];
+
+    const navLinks = user?.role === 'teacher' ? teacherLinks : studentLinks;
 
     return (
         <>
