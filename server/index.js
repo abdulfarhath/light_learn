@@ -4,6 +4,9 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 require('dotenv').config();
 
+// Import database pool early to test connection
+const pool = require('./shared/config/database');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -17,6 +20,9 @@ const resourcesModule = require('./features/resources');
 const doubtsModule = require('./features/doubts');
 const todosFeature = require('./features/todos');
 const classesFeature = require('./features/classes');
+const quizzesFeature = require('./features/quizzes');
+const pollsFeature = require('./features/polls');
+const assignmentsFeature = require('./features/assignments');
 
 // Mount feature routes
 app.use('/api/auth', authFeature.routes);
@@ -25,6 +31,9 @@ app.use('/api/classes', classesFeature.routes);
 app.use('/api/courses', coursesFeature.routes);
 app.use('/api/doubts', doubtsModule.routes);
 app.use('/api/todos', todosFeature.routes);
+app.use('/api/quizzes', quizzesFeature.routes);
+app.use('/api/polls', pollsFeature.routes);
+app.use('/api/assignments', assignmentsFeature.routes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -41,7 +50,17 @@ const io = new Server(server, {
 liveSessionsModule.socket.init(io);
 resourcesModule.socket.init(io);
 
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => console.log(`🚀 SERVER RUNNING ON PORT ${PORT}`));
+// Test database connection before starting server
+pool.query('SELECT NOW()', (err, result) => {
+  if (err) {
+    console.error('❌ Failed to connect to database:', err.message);
+    process.exit(1);
+  } else {
+    console.log('✅ Connected to PostgreSQL database');
+    
+    const PORT = process.env.PORT || 3001;
+    server.listen(PORT, () => console.log(`🚀 SERVER RUNNING ON PORT ${PORT}`));
+  }
+});
 
 module.exports = { app, server, io };
