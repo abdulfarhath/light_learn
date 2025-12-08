@@ -42,6 +42,6 @@ liveSessionsModule.socket.init(io);
 resourcesModule.socket.init(io);
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => console.log(\ SERVER RUNNING ON PORT \\));
+server.listen(PORT, () => console.log(`🚀 SERVER RUNNING ON PORT ${PORT}`));
 
 module.exports = { app, server, io };
