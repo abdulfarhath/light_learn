@@ -58,6 +58,45 @@ const coursesAPI = {
             throw error;
         }
     },
+
+    /**
+     * Get subject by ID
+     */
+    getSubjectById: async (subjectId) => {
+        try {
+            const response = await api.get(`/courses/subjects/${subjectId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching subject:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Update subject (Teacher only)
+     */
+    updateSubject: async (subjectId, updates) => {
+        try {
+            const response = await api.put(`/courses/subjects/${subjectId}`, updates);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating subject:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Delete subject (Teacher only)
+     */
+    deleteSubject: async (subjectId) => {
+        try {
+            const response = await api.delete(`/courses/subjects/${subjectId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error deleting subject:', error);
+            throw error;
+        }
+    },
 };
 
 export default coursesAPI;

@@ -16,14 +16,16 @@ const Classes = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        fetchClasses();
-    }, []);
+        if (user?.role) {
+            fetchClasses();
+        }
+    }, [user?.role]);
 
     const fetchClasses = async () => {
         try {
             setLoading(true);
-            const response = await classAPI.getMyClasses(user.role);
-            setClasses(response.classes);
+            const classes = await classAPI.getMyClasses(user.role);
+            setClasses(classes || []);
         } catch (error) {
             console.error('Error fetching classes:', error);
             setError('Failed to load classes');
@@ -68,11 +70,19 @@ const Classes = () => {
         setTimeout(() => setMessage(''), 3000);
     };
 
+    if (!user) {
+        return (
+            <div className="flex-1 p-6 overflow-y-auto w-full max-w-7xl mx-auto flex items-center justify-center">
+                <div className="text-xl text-text-secondary">Loading user data...</div>
+            </div>
+        );
+    }
+
     if (selectedClass) {
         return (
-            <ClassDetails 
-                classData={selectedClass} 
-                onBack={() => setSelectedClass(null)} 
+            <ClassDetails
+                classData={selectedClass}
+                onBack={() => setSelectedClass(null)}
                 role={user.role}
             />
         );

@@ -59,6 +59,54 @@ class CoursesController {
             res.status(500).json({ error: 'Server error' });
         }
     }
+
+    async getSubjectById(req, res) {
+        try {
+            const { id } = req.params;
+            const subject = await coursesService.getSubjectById(id);
+
+            if (!subject) {
+                return res.status(404).json({ error: 'Subject not found' });
+            }
+
+            res.json({ subject });
+        } catch (error) {
+            console.error('Get subject error:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
+
+    async updateSubject(req, res) {
+        try {
+            const { id } = req.params;
+            const updates = req.body;
+
+            const subject = await coursesService.updateSubject(id, updates);
+
+            if (!subject) {
+                return res.status(404).json({ error: 'Subject not found' });
+            }
+
+            res.json({ subject });
+        } catch (error) {
+            console.error('Update subject error:', error);
+            if (error.code === '23505') {
+                return res.status(400).json({ error: 'Subject code already exists for this context' });
+            }
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
+
+    async deleteSubject(req, res) {
+        try {
+            const { id } = req.params;
+            await coursesService.deleteSubject(id);
+            res.json({ message: 'Subject deleted successfully' });
+        } catch (error) {
+            console.error('Delete subject error:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
 }
 
 module.exports = new CoursesController();

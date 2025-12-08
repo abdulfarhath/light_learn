@@ -30,7 +30,7 @@ const Courses = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-bg-main p-6 flex items-center justify-center">
+            <div className="flex-1 p-6 overflow-y-auto w-full max-w-7xl mx-auto flex items-center justify-center">
                 <div className="text-xl text-text-secondary">Loading subjects...</div>
             </div>
         );
@@ -38,7 +38,7 @@ const Courses = () => {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-bg-main p-6 flex items-center justify-center">
+            <div className="flex-1 p-6 overflow-y-auto w-full max-w-7xl mx-auto flex items-center justify-center">
                 <div className="text-center">
                     <div className="text-red-500 text-xl mb-4">{error}</div>
                     <button
@@ -53,11 +53,11 @@ const Courses = () => {
     }
 
     return (
-        <div className="min-h-screen bg-bg-main p-4 md:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-text-main mb-2">My Subjects</h1>
-                    <p className="text-text-secondary">Subjects for your current semester</p>
+        <div className="flex-1 p-6 overflow-y-auto w-full max-w-7xl mx-auto">
+            <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-3xl font-bold text-text-main">My Subjects</h1>
+                    <p className="text-text-muted">Subjects for your current semester</p>
                 </div>
 
                 {subjects.length === 0 ? (

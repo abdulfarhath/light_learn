@@ -20,6 +20,9 @@ const resourcesModule = require('./features/resources');
 const doubtsModule = require('./features/doubts');
 const todosFeature = require('./features/todos');
 const classesFeature = require('./features/classes');
+const quizzesFeature = require('./features/quizzes');
+const pollsFeature = require('./features/polls');
+const assignmentsFeature = require('./features/assignments');
 
 // Mount feature routes
 app.use('/api/auth', authFeature.routes);
@@ -28,6 +31,9 @@ app.use('/api/classes', classesFeature.routes);
 app.use('/api/courses', coursesFeature.routes);
 app.use('/api/doubts', doubtsModule.routes);
 app.use('/api/todos', todosFeature.routes);
+app.use('/api/quizzes', quizzesFeature.routes);
+app.use('/api/polls', pollsFeature.routes);
+app.use('/api/assignments', assignmentsFeature.routes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
