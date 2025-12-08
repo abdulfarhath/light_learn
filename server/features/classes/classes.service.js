@@ -106,6 +106,23 @@ class ClassesService {
     }
 
     /**
+     * Get all classes (for course catalog)
+     */
+    async getAllClasses() {
+        const result = await pool.query(
+            `SELECT c.*, u.full_name as teacher_name,
+       COUNT(ce.student_id) as student_count
+       FROM classes c
+       JOIN users u ON c.teacher_id = u.id
+       LEFT JOIN class_enrollments ce ON c.id = ce.class_id
+       GROUP BY c.id, u.full_name
+       ORDER BY c.created_at DESC`
+        );
+
+        return result.rows;
+    }
+
+    /**
      * Get class details by ID
      */
     async getClassById(classId) {

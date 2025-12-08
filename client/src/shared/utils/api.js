@@ -36,6 +36,9 @@ api.interceptors.response.use(
             useAuthStore.getState().logout();
             window.location.href = '/login';
         }
+        if (error.response?.status === 403) {
+            console.error('API 403 Forbidden:', error.config.url);
+        }
         return Promise.reject(error);
     }
 );
@@ -91,6 +94,11 @@ export const classAPI = {
     getMyClasses: async (role) => {
         const endpoint = role === 'teacher' ? '/classes/my-classes' : '/classes/enrolled';
         const response = await api.get(endpoint);
+        return response.data;
+    },
+
+    getAllClasses: async () => {
+        const response = await api.get('/classes');
         return response.data;
     },
 

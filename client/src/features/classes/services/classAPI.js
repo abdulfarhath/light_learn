@@ -17,7 +17,7 @@ export const classAPI = {
     getMyClasses: async (role) => {
         const endpoint = role === 'teacher' ? '/classes/my-classes' : '/classes/enrolled';
         const response = await api.get(endpoint);
-        return response.data;
+        return response.data.classes;
     },
 
     // Get class details

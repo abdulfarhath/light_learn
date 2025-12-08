@@ -6,8 +6,10 @@ import Layout from './shared/components/Layout';
 import { Login, Register } from './features/auth';
 import { Profile } from './features/users';
 import { Classes } from './features/classes';
+import DoubtsPage from './features/doubts/pages/DoubtsPage';
 import Dashboard from './pages/Dashboard';
-import Courses from './pages/Courses';
+import Courses from './features/courses/pages/Courses';
+import SubjectDetails from './features/courses/pages/SubjectDetails';
 import LiveSession from './pages/LiveSession';
 
 import Schedule from './pages/Schedule';
@@ -47,6 +49,14 @@ function App() {
                         }
                     />
                     <Route
+                        path="/doubts"
+                        element={
+                            <ProtectedRoute>
+                                <DoubtsPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
                         path="/classes"
                         element={
                             <ProtectedRoute>
@@ -54,6 +64,15 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
+                    <Route
+                        path="/subjects/:id"
+                        element={
+                            <ProtectedRoute>
+                                <SubjectDetails />
+                            </ProtectedRoute>
+                        }
+                    />
+
                     <Route
                         path="/schedule"
                         element={

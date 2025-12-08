@@ -1,7 +1,10 @@
 import React from 'react';
 import Card from '../shared/components/Card';
+import useAuthStore from '../stores/authStore';
 
 const Schedule = () => {
+    const { user } = useAuthStore();
+    
     const events = [
         {
             id: 1,
@@ -38,8 +41,12 @@ const Schedule = () => {
     return (
         <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 max-w-7xl mx-auto w-full no-scrollbar">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold text-text-main">Schedule</h1>
-                <p className="text-text-muted">Manage your classes and deadlines</p>
+                <h1 className="text-3xl font-bold text-text-main">
+                    {user?.role === 'teacher' ? 'Teaching Schedule' : 'My Schedule'}
+                </h1>
+                <p className="text-text-muted">
+                    {user?.role === 'teacher' ? 'Manage your upcoming sessions and deadlines' : 'Keep track of your classes and assignments'}
+                </p>
             </div>
 
             <Card className="w-full">

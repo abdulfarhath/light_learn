@@ -1,7 +1,7 @@
-const pool = require('../config/database');
+const pool = require('../shared/config/database');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 async function runClassMigration() {
     console.log('🔧 Running class management schema migration...');

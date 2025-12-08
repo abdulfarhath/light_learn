@@ -104,7 +104,11 @@ class AuthController {
                 return res.status(404).json({ error: 'User not found' });
             }
 
-            res.json({ user });
+            // ADD THIS LINE to check your server terminal
+            console.log("Database User Data:", user);
+
+            const sanitizedUser = authService.sanitizeUser(user);
+            res.json({ user: sanitizedUser });
         } catch (error) {
             console.error('Get profile error:', error);
             res.status(500).json({ error: 'Server error' });
