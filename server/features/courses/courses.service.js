@@ -23,6 +23,13 @@ class CoursesService {
         return result.rows;
     }
 
+    async getAllSubjects() {
+        const result = await pool.query(
+            `SELECT * FROM subjects ORDER BY subject_name ASC`
+        );
+        return result.rows;
+    }
+
     async createSubject(subjectData) {
         const { subject_name, subject_code, year, semester, branch, college } = subjectData;
         const query = `

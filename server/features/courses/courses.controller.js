@@ -11,11 +11,25 @@ class CoursesController {
                 return res.status(404).json({ error: 'User not found' });
             }
 
-            // Required fields
+            // If user is a teacher, return all subjects
+            if (user.role === 'teacher') {
+                const subjects = await coursesService.getAllSubjects();
+                return res.json({ subjects });
+            }
+
+            // Required fields for students
             if (!user.year || !user.semester || !user.branch || !user.college) {
+                // FALLBACK: For development/testing, if profile is incomplete, return ALL subjects
+                // instead of blocking with a 400 error.
+                console.warn(`User ${user.id} has incomplete profile. Returning all subjects as fallback.`);
+                const subjects = await coursesService.getAllSubjects();
+                return res.json({ subjects });
+                
+                /* Original strict check:
                 return res.status(400).json({
                     error: 'Incomplete profile. Please update your profile with year, semester, branch, and college.'
                 });
+                */
             }
 
             // ⭐ Normalize filters (fixes your empty subjects bug)

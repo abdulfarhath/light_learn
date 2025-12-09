@@ -4,7 +4,7 @@ import useAuthStore from '../stores/authStore';
 import StatCard from '../shared/components/StatCard';
 import Card from '../shared/components/Card';
 import Button from '../shared/components/Button';
-import { classAPI } from '../services/api';
+import { classAPI, lessonsAPI } from '../services/api';
 import { todosAPI } from '../features/todos';
 
 const TeacherDashboard = () => {
@@ -18,6 +18,7 @@ const TeacherDashboard = () => {
         resourcesShared: 0
     });
     const [recentClasses, setRecentClasses] = useState([]);
+    const [recentRecordings, setRecentRecordings] = useState([]);
     const [todos, setTodos] = useState([]);
     const [newTodo, setNewTodo] = useState('');
 
@@ -45,6 +46,14 @@ const TeacherDashboard = () => {
             const classes = response.classes || [];
 
             setRecentClasses(classes.slice(0, 3));
+
+            // Fetch recordings
+            try {
+                const recordings = await lessonsAPI.getTeacherLessons();
+                setRecentRecordings(recordings.slice(0, 3));
+            } catch (err) {
+                console.error('Error fetching recordings:', err);
+            }
 
             const totalStudents = classes.reduce((sum, cls) => sum + parseInt(cls.student_count || 0), 0);
             setStats({
@@ -103,6 +112,14 @@ const TeacherDashboard = () => {
             hoverBorder: 'hover:border-primary'
         },
         {
+            title: 'Record Lesson',
+            description: 'Create offline lesson with slides',
+            icon: '🎙️',
+            action: () => navigate('/record-lesson'),
+            color: 'secondary',
+            hoverBorder: 'hover:border-secondary'
+        },
+        {
             title: 'Create Class',
             description: 'Start a new class',
             icon: '➕',
@@ -124,7 +141,7 @@ const TeacherDashboard = () => {
         <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 max-w-7xl mx-auto w-full no-scrollbar">
             <div className="flex flex-col gap-6">
                 {/* Welcome Section */}
-                <div className="bg-gradient-to-r from-primary to-accent p-10 rounded-2xl text-center text-white shadow-lg animate-slide-up relative overflow-hidden">
+                {/* <div className="bg-gradient-to-r from-primary to-accent p-10 rounded-2xl text-center text-white shadow-lg animate-slide-up relative overflow-hidden">
                     <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]"></div>
                     <div className="relative z-10">
                         <div className="mb-6">
@@ -140,7 +157,7 @@ const TeacherDashboard = () => {
                                 variant="primary"
                                 size="large"
                                 onClick={() => navigate('/live-session')}
-                                className="bg-white text-primary hover:bg-gray-100 border-none shadow-xl"
+                                className="bg-secondary text-primary hover:bg-gray-100 border-none shadow-xl"
                             >
                                 🎥 Start Live Session
                             </Button>
@@ -154,7 +171,7 @@ const TeacherDashboard = () => {
                             </Button>
                         </div>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
@@ -369,6 +386,52 @@ const TeacherDashboard = () => {
                     </div>
                 </Card>
             </div>
+
+            {/* Recent Recordings */}
+            <Card title="Recent Recordings" className="w-full">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-border">
+                                <th className="p-3 font-semibold text-text-muted">Title</th>
+                                <th className="p-3 font-semibold text-text-muted">Date</th>
+                                <th className="p-3 font-semibold text-text-muted">Duration</th>
+                                <th className="p-3 font-semibold text-text-muted">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {recentRecordings.length === 0 ? (
+                                <tr>
+                                    <td colSpan="4" className="p-4 text-center text-text-muted">
+                                        No recordings yet. Start recording a lesson!
+                                    </td>
+                                </tr>
+                            ) : (
+                                recentRecordings.map((rec) => (
+                                    <tr key={rec.id} className="border-b border-border hover:bg-bg-dark transition-colors">
+                                        <td className="p-3 font-medium text-text-main">{rec.title}</td>
+                                        <td className="p-3 text-text-muted">
+                                            {new Date(rec.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td className="p-3 text-text-muted">
+                                            {rec.duration ? new Date(rec.duration * 1000).toISOString().substr(11, 8) : '00:00:00'}
+                                        </td>
+                                        <td className="p-3">
+                                            <Button 
+                                                variant="secondary" 
+                                                size="small"
+                                                onClick={() => navigate(`/lessons/${rec.id}`)}
+                                            >
+                                                Play
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
         </div>
     );
 };

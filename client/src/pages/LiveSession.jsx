@@ -5,7 +5,7 @@ import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import useAuthStore from "../stores/authStore";
 import Navbar from "../shared/components/Navbar";
 
-const SOCKET_URL = "http://localhost:3001";
+const SOCKET_URL = "https://8eb2acee1ab2.ngrok-free.app";
 
 GlobalWorkerOptions.workerSrc = pdfWorker;
 
@@ -427,9 +427,7 @@ function LiveSession() {
                     {role === 'teacher' && (
                         <>
                             <button className={`w-full py-3 md:py-2 rounded text-base md:text-sm font-medium transition-colors ${studentDrawAllowed ? 'bg-danger text-white' : 'bg-success text-white'}`} onClick={toggleBoardAccess}>{studentDrawAllowed ? '🔒 Lock Board' : '🔓 Unlock Board'}</button>
-                            <button className={`w-full py-3 md:py-2 rounded text-base md:text-sm font-medium transition-colors ${isRecording ? 'bg-red-600 text-white animate-pulse' : 'bg-bg-dark border border-border hover:bg-bg-hover'}`} onClick={toggleRecording}>
-                                {isRecording ? '⏹ Stop Recording' : '⏺ Start Recording'}
-                            </button>
+                            
                             <button className="w-full py-3 md:py-2 rounded text-base md:text-sm font-medium bg-bg-dark border border-border hover:bg-bg-hover transition-colors" onClick={() => fileInputRef.current.click()}>⬆ Share Slide</button>
                             <input type="file" accept="image/*,application/pdf" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
                             <button className="w-full py-3 md:py-2 rounded text-base md:text-sm font-medium bg-primary hover:bg-primary-dark text-white transition-colors" onClick={() => setShowLaunchPad(!showLaunchPad)}>🚀 Quiz</button>

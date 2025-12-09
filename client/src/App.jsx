@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import { ProtectedRoute } from './shared';
 import Layout from './shared/components/Layout';
+import ErrorBoundary from './shared/components/ErrorBoundary';
 import { Login, Register } from './features/auth';
 import { Profile } from './features/users';
 import { Classes } from './features/classes';
@@ -11,6 +12,8 @@ import Dashboard from './pages/Dashboard';
 import Courses from './features/courses/pages/Courses';
 import SubjectDetails from './features/courses/pages/SubjectDetails';
 import LiveSession from './pages/LiveSession';
+import LessonRecorder from './features/lesson-recording/LessonRecorder';
+import LessonPlayer from './features/lesson-recording/LessonPlayer';
 
 import Schedule from './pages/Schedule';
 
@@ -21,6 +24,26 @@ function App() {
                 {/* Public routes */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+
+                {/* Standalone Protected Routes (No Sidebar) */}
+                <Route 
+                    path="/record-lesson" 
+                    element={
+                        <ProtectedRoute>
+                            <LessonRecorder />
+                        </ProtectedRoute>
+                    } 
+                />
+                <Route 
+                    path="/lessons/:id" 
+                    element={
+                        <ProtectedRoute>
+                            <ErrorBoundary>
+                                <LessonPlayer />
+                            </ErrorBoundary>
+                        </ProtectedRoute>
+                    } 
+                />
 
                 {/* Protected routes with Sidebar Layout */}
                 <Route element={<Layout />}>

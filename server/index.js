@@ -17,6 +17,7 @@ const resourcesModule = require('./features/resources');
 const doubtsModule = require('./features/doubts');
 const todosFeature = require('./features/todos');
 const classesFeature = require('./features/classes');
+const lessonsFeature = require('./features/lessons');
 
 // Mount feature routes
 app.use('/api/auth', authFeature.routes);
@@ -25,6 +26,10 @@ app.use('/api/classes', classesFeature.routes);
 app.use('/api/courses', coursesFeature.routes);
 app.use('/api/doubts', doubtsModule.routes);
 app.use('/api/todos', todosFeature.routes);
+app.use('/api/lessons', lessonsFeature.lessonsRoutes);
+
+// Serve static files
+app.use('/storage', express.static('storage'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

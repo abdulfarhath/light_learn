@@ -4,7 +4,7 @@ import useAuthStore from '../stores/authStore';
 import StatCard from '../shared/components/StatCard';
 import Card from '../shared/components/Card';
 import Button from '../shared/components/Button';
-import { classAPI } from '../services/api';
+import { classAPI, lessonsAPI } from '../services/api';
 import { todosAPI } from '../features/todos';
 
 const StudentDashboard = () => {
@@ -17,6 +17,7 @@ const StudentDashboard = () => {
         completedActivities: 0
     });
     const [recentClasses, setRecentClasses] = useState([]);
+    const [recentLessons, setRecentLessons] = useState([]);
     const [todos, setTodos] = useState([]);
     const [newTodo, setNewTodo] = useState('');
 
@@ -44,6 +45,18 @@ const StudentDashboard = () => {
             const classes = response.classes || [];
 
             setRecentClasses(classes.slice(0, 3));
+
+            // Fetch lessons for enrolled classes
+            try {
+                // For now, fetch all lessons (or implement getStudentLessons in backend)
+                // Since we don't have a specific endpoint for "my enrolled lessons", 
+                // we might need to add one. For now, let's use a placeholder or fetch all if public.
+                // Actually, let's add the endpoint first.
+                const lessons = await lessonsAPI.getStudentLessons();
+                setRecentLessons(lessons.slice(0, 3));
+            } catch (err) {
+                console.error('Error fetching lessons:', err);
+            }
 
             setStats({
                 enrolledClasses: classes.length,
@@ -90,37 +103,10 @@ const StudentDashboard = () => {
         }
     };
 
-    const quickActions = [
-        {
-            title: 'Join Live Session',
-            description: 'Video, Whiteboard, Chat & More',
-            icon: '📡',
-            action: () => navigate('/live-session'),
-            color: 'primary',
-            hoverBorder: 'hover:border-primary'
-        },
-        {
-            title: 'Join Class',
-            description: 'Enter class code',
-            icon: '🚪',
-            action: () => navigate('/classes'),
-            color: 'success',
-            hoverBorder: 'hover:border-success'
-        },
-        {
-            title: 'My Classes',
-            description: 'View enrolled classes',
-            icon: '📚',
-            action: () => navigate('/classes'),
-            color: 'warning',
-            hoverBorder: 'hover:border-warning'
-        }
-    ];
-
     return (
         <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 max-w-7xl mx-auto w-full no-scrollbar">
             <div className="flex flex-col gap-6">
-                {/* Welcome Section */}
+                {/* Welcome Section
                 <div className="bg-gradient-to-r from-primary to-accent p-10 rounded-2xl text-center text-white shadow-lg animate-slide-up relative overflow-hidden">
                     <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]"></div>
                     <div className="relative z-10">
@@ -151,7 +137,7 @@ const StudentDashboard = () => {
                             </Button>
                         </div>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
@@ -185,97 +171,6 @@ const StudentDashboard = () => {
                     />
                 </div>
 
-                {/* Main Content Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Quick Actions */}
-                    <Card className="lg:col-span-1 h-full">
-                        <div className="mb-4">
-                            <h3 className="text-xl font-semibold text-text-main">⚡ Quick Actions</h3>
-                            <p className="text-text-muted text-sm">Get started quickly</p>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            {quickActions.map((action, index) => (
-                                <div
-                                    key={index}
-                                    className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all bg-bg-dark/50 hover:bg-bg-hover border border-transparent ${action.hoverBorder}`}
-                                    onClick={action.action}
-                                >
-                                    <div className={`text-2xl p-2 rounded-lg bg-${action.color}/10 text-${action.color}`}>
-                                        {action.icon}
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold text-text-main">{action.title}</h4>
-                                        <p className="text-xs text-text-muted">{action.description}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </Card>
-
-                    {/* Recent Classes */}
-                    <Card className="lg:col-span-2 h-full">
-                        <div className="mb-4 flex justify-between items-center">
-                            <div>
-                                <h3 className="text-xl font-semibold text-text-main">🏫 Recent Classes</h3>
-                                <p className="text-text-muted text-sm">Recently enrolled</p>
-                            </div>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            {loading ? (
-                                <div className="flex flex-col items-center justify-center py-8 text-text-muted">
-                                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2"></div>
-                                    <p>Loading classes...</p>
-                                </div>
-                            ) : recentClasses.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-8 text-center">
-                                    <div className="text-4xl mb-2">📭</div>
-                                    <h4 className="font-semibold mb-1 text-text-main">No classes yet</h4>
-                                    <p className="text-text-muted text-sm mb-4">
-                                        Join a class using the code from your teacher
-                                    </p>
-                                    <Button
-                                        variant="primary"
-                                        onClick={() => navigate('/classes')}
-                                    >
-                                        Join Class
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col gap-3">
-                                    {recentClasses.map((cls) => (
-                                        <div
-                                            key={cls.id}
-                                            className="flex items-center justify-between p-4 bg-bg-dark border border-border rounded-xl cursor-pointer hover:bg-bg-hover hover:border-primary/30 transition-all group"
-                                            onClick={() => navigate(`/classes`)}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-xl text-primary">🎓</div>
-                                                <div>
-                                                    <h4 className="font-semibold text-text-main group-hover:text-primary transition-colors">{cls.class_name}</h4>
-                                                    <div className="flex gap-3 text-xs text-text-muted">
-                                                        <span className="bg-bg-panel px-2 py-0.5 rounded border border-border font-mono">{cls.class_code}</span>
-                                                        {/* Removed student count for students */}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="text-text-muted group-hover:translate-x-1 transition-transform">→</div>
-                                        </div>
-                                    ))}
-                                    {recentClasses.length > 0 && (
-                                        <Button
-                                            variant="ghost"
-                                            onClick={() => navigate('/classes')}
-                                            className="w-full mt-2 text-primary hover:bg-primary/10"
-                                        >
-                                            View All Classes →
-                                        </Button>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </Card>
-                </div>
-
                 {/* Todo List Section */}
                 <Card className="w-full">
                     <div className="mb-4">
@@ -305,7 +200,7 @@ const StudentDashboard = () => {
 
                     {/* Todo List */}
                     <div className="flex flex-col gap-2">
-                        {todos.length === 0 ? (
+                        {(!todos || todos.length === 0) ? (
                             <div className="flex flex-col items-center justify-center py-8 text-center">
                                 <div className="text-4xl mb-2">📝</div>
                                 <h4 className="font-semibold mb-1 text-text-main">No assignments yet</h4>
@@ -315,7 +210,7 @@ const StudentDashboard = () => {
                             </div>
                         ) : (
                             <div className="space-y-2 max-h-96 overflow-y-auto no-scrollbar">
-                                {todos.map((todo) => (
+                                {Array.isArray(todos) && todos.map((todo) => (
                                     <div
                                         key={todo.id}
                                         className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${todo.completed
@@ -366,6 +261,52 @@ const StudentDashboard = () => {
                     </div>
                 </Card>
             </div>
+
+            {/* Recent Lessons */}
+            <Card title="Recent Lessons" className="w-full">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-border">
+                                <th className="p-3 font-semibold text-text-muted">Title</th>
+                                <th className="p-3 font-semibold text-text-muted">Date</th>
+                                <th className="p-3 font-semibold text-text-muted">Duration</th>
+                                <th className="p-3 font-semibold text-text-muted">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(!recentLessons || recentLessons.length === 0) ? (
+                                <tr>
+                                    <td colSpan="4" className="p-4 text-center text-text-muted">
+                                        No lessons available yet.
+                                    </td>
+                                </tr>
+                            ) : (
+                                Array.isArray(recentLessons) && recentLessons.map((rec) => (
+                                    <tr key={rec.id} className="border-b border-border hover:bg-bg-dark transition-colors">
+                                        <td className="p-3 font-medium text-text-main">{rec.title}</td>
+                                        <td className="p-3 text-text-muted">
+                                            {new Date(rec.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td className="p-3 text-text-muted">
+                                            {rec.duration ? new Date(rec.duration * 1000).toISOString().substr(11, 8) : '00:00:00'}
+                                        </td>
+                                        <td className="p-3">
+                                            <Button 
+                                                variant="secondary" 
+                                                size="small"
+                                                onClick={() => navigate(`/lessons/${rec.id}`)}
+                                            >
+                                                Watch
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
         </div>
     );
 };
