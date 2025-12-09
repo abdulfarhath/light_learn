@@ -1,79 +1,43 @@
-# LightLearn 2G
+# LightLearn
 
-LightLearn is a specialized Learning Management System (LMS) engineered to deliver real-time, interactive education on extremely slow internet connections (2G/EDGE speeds ~15-20 kbps). It features a live classroom with whiteboard, audio/video streaming, and interactive quizzes.
+**Real-time education for low-bandwidth environments (2G/EDGE).**
 
-## Features
+LightLearn is a specialized Learning Management System (LMS) engineered to deliver real-time, interactive education on extremely slow internet connections (~15-20 kbps).
 
-### 2G-Optimized Live Class:
+## 📚 Documentation
 
-*   **Vector Whiteboard:** Uses mathematical coordinates (~0.5 kbps) instead of video streaming for crystal clear, low-bandwidth drawing.
-*   **Stop-Motion Video:** Transmits teacher video as 1 FPS snapshots (~4KB), providing visual presence without heavy data usage.
-*   **Walkie-Talkie Audio:** Sends audio in 1-second raw binary chunks via a server relay to guarantee zero packet loss.
+We have comprehensive documentation available in the `docs/` directory:
 
-### Interactive Learning Tools:
+- **[Getting Started](./docs/GETTING_STARTED.md)**: Setup and installation guide.
+- **[Architecture](./docs/ARCHITECTURE.md)**: Overview of the modular, feature-based architecture.
+- **[API Reference](./docs/API_REFERENCE.md)**: Detailed backend API documentation.
+- **[Contributing](./docs/CONTRIBUTING.md)**: Guidelines for contributors.
 
-*   **Smart PDF Sharing:** Converts PDFs to lightweight images locally before sending, allowing students to download single slides on demand.
-*   **Low-Data Quizzes:** Enables teachers to create and launch instant pop quizzes with minimal data usage.
-*   **Resource Hub:** Dedicated area for downloading class notes and audio replays.
+## ✨ Key Features
 
-### Role-Based Access:
+- **2G-Optimized Live Class**: Vector whiteboard, stop-motion video, and walkie-talkie audio.
+- **Interactive Tools**: Smart PDF sharing, low-data quizzes.
+- **Role-Based Access**: Dedicated Teacher and Student modes.
+- **Offline First**: Resume-able downloads and caching.
 
-*   **Teacher Mode:** Admin controls for drawing, uploading, quizzes, and board unlocking.
-*   **Student Mode:** Viewer-optimized with hand-raising (chat) and permission-based interaction.
+## 🚀 Quick Start
 
-### Responsive Design:
-*   Fully responsive UI that adapts to desktop (side-by-side view) and mobile (stacked view) layouts.
+1.  **Clone parts**:
+    ```bash
+    git clone https://github.com/abdulfarhath/light_learn.git
+    ```
+2.  **Server**: `cd server` -> `npm install` -> `npm run dev`
+3.  **Client**: `cd client` -> `npm install` -> `npm run dev`
 
-## Tech Stack
+See [Getting Started](./docs/GETTING_STARTED.md) for full details.
 
-*   **Frontend Framework:** React (Vite)
-*   **Styling:** CSS3 (Responsive, Dark Mode)
-*   **Real-time Communication:** Socket.io & WebSocket Relay
-*   **PDF Engine:** PDF.js (Mozilla)
-*   **Backend:** Node.js & Express
+## 🛠 Tech Stack
 
-## How to Run Locally
-
-### Prerequisites
-
-*   Node.js (v16 or higher) installed.
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/abdulfarhath/light_learn.git
-cd light_learn
-```
-
-### 2. Setup the Server
-
-Open a terminal in the root directory:
-
-```bash
-cd server
-npm install
-node index.js
-```
-
-The server will start on port 3001.
-
-### 3. Setup the Client
-
-Open a new terminal window in the root directory:
-
-```bash
-cd client
-npm install
-npm run build
-npm run preview
-```
-
-The app will run on http://localhost:4173.
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
+- **Frontend**: React (Vite), TailwindCSS
+- **Backend**: Node.js, Express, Socket.io
+- **Database**: PostgreSQL
+- **Others**: Simple-Peer (WebRTC), PDF.js
 
 ## License
 
-This project is open-source and available under the MIT License.
+MIT License.

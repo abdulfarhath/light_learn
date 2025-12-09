@@ -4,6 +4,7 @@ import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import useAuthStore from "../stores/authStore";
 import Navbar from "../shared/components/Navbar";
+import SessionSummary from "../components/SessionSummary";
 
 const SOCKET_URL = "https://8eb2acee1ab2.ngrok-free.app";
 
@@ -58,6 +59,11 @@ function LiveSession() {
 
     // MOBILE STATE
     const [showSidebar, setShowSidebar] = useState(false);
+
+    // TRANSCRIPTION STATE
+    const [sessionSummary, setSessionSummary] = useState(null);
+    const [transcriptionStatus, setTranscriptionStatus] = useState(null);
+    const [showSessionSummary, setShowSessionSummary] = useState(false);
 
     const myVideo = useRef(null);
     const userImage = useRef(null);
@@ -121,7 +127,7 @@ function LiveSession() {
 
         socket.on("recording_status", (data) => {
             setIsRecording(data.isRecording);
-            
+
             // If recording started AND we are streaming audio, restart recorder to send header
             if (data.isRecording && audioLoopRef.current && myVideo.current && myVideo.current.srcObject) {
                 // Stop old recorder if running
@@ -137,12 +143,37 @@ function LiveSession() {
             }
         });
 
+        // Transcription events
+        socket.on("session_ended", (data) => {
+            console.log("Session ended:", data);
+            setTranscriptionStatus({ status: 'pending', message: data.message });
+        });
+
+        socket.on("transcription_status", (data) => {
+            console.log("Transcription status:", data);
+            setTranscriptionStatus({ status: data.status, message: data.message });
+        });
+
+        socket.on("transcription_complete", (data) => {
+            console.log("Transcription complete:", data);
+            setSessionSummary(data);
+            setTranscriptionStatus({ status: 'complete', message: 'Transcription ready!' });
+            setShowSessionSummary(true);
+        });
+
+        socket.on("transcription_error", (data) => {
+            console.error("Transcription error:", data);
+            setTranscriptionStatus({ status: 'error', message: data.error });
+        });
+
         return () => {
             socket.off('connect'); socket.off('disconnect');
             socket.off("receive_video_frame"); socket.off("receive_audio_stream");
             socket.off("receive_draw_data"); socket.off("receive_background_image");
             socket.off("receive_quiz"); socket.off("receive_answer"); socket.off("board_access_changed");
             socket.off("receive_message"); socket.off("recording_status");
+            socket.off("session_ended"); socket.off("transcription_status");
+            socket.off("transcription_complete"); socket.off("transcription_error");
         };
     }, [isJoined, role]);
 
@@ -427,7 +458,22 @@ function LiveSession() {
                     {role === 'teacher' && (
                         <>
                             <button className={`w-full py-3 md:py-2 rounded text-base md:text-sm font-medium transition-colors ${studentDrawAllowed ? 'bg-danger text-white' : 'bg-success text-white'}`} onClick={toggleBoardAccess}>{studentDrawAllowed ? '🔒 Lock Board' : '🔓 Unlock Board'}</button>
-                            
+
+                            {/* Recording Control */}
+                            <button
+                                className={`w-full py-3 md:py-2 rounded text-base md:text-sm font-medium transition-colors flex items-center justify-center gap-2 ${isRecording ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-orange-500 hover:bg-orange-600 text-white'}`}
+                                onClick={toggleRecording}
+                            >
+                                {isRecording ? (
+                                    <>
+                                        <span className="w-3 h-3 bg-white rounded-full animate-pulse"></span>
+                                        Stop Recording
+                                    </>
+                                ) : (
+                                    <>⏺ Start Recording</>
+                                )}
+                            </button>
+
                             <button className="w-full py-3 md:py-2 rounded text-base md:text-sm font-medium bg-bg-dark border border-border hover:bg-bg-hover transition-colors" onClick={() => fileInputRef.current.click()}>⬆ Share Slide</button>
                             <input type="file" accept="image/*,application/pdf" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
                             <button className="w-full py-3 md:py-2 rounded text-base md:text-sm font-medium bg-primary hover:bg-primary-dark text-white transition-colors" onClick={() => setShowLaunchPad(!showLaunchPad)}>🚀 Quiz</button>
@@ -453,6 +499,33 @@ function LiveSession() {
                         {activeQuiz.options.map((opt, i) => <button key={i} onClick={() => submitAnswer(i)} className="p-4 md:p-3 bg-gray-100 border border-gray-200 rounded hover:bg-primary hover:text-white transition-colors text-left text-base md:text-sm min-h-[48px]">{opt}</button>)}
                     </div>
                 </div>
+            )}
+
+            {/* Transcription Status Indicator */}
+            {transcriptionStatus && transcriptionStatus.status === 'processing' && (
+                <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-3 animate-pulse">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>{transcriptionStatus.message}</span>
+                </div>
+            )}
+
+            {/* Session Summary Modal */}
+            {showSessionSummary && sessionSummary && (
+                <SessionSummary
+                    sessionData={sessionSummary}
+                    onClose={() => setShowSessionSummary(false)}
+                    apiBaseUrl={SOCKET_URL}
+                />
+            )}
+
+            {/* Show Summary Button (after transcription is complete) */}
+            {sessionSummary && !showSessionSummary && (
+                <button
+                    onClick={() => setShowSessionSummary(true)}
+                    className="fixed bottom-4 right-4 bg-success hover:bg-green-700 text-white px-4 py-3 rounded-lg shadow-lg z-40 flex items-center gap-2 transition-colors"
+                >
+                    📝 View Session Summary
+                </button>
             )}
         </div>
     );
