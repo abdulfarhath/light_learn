@@ -1,5 +1,5 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const db = require('../../config/database');
+const db = require('../../shared/config/database');
 
 // Initialize Gemini if key is present
 const genAI = process.env.GEMINI_API_KEY 

@@ -19,14 +19,15 @@ async function setupDatabase() {
     });
 
     try {
-        console.log(`📦 Creating database: ${process.env.DB_NAME}...`);
+        console.log(`📦 Creating database: ${process.env.DB_NAME} (if not exists)...`);
         await adminPool.query(`CREATE DATABASE ${process.env.DB_NAME}`);
         console.log("✅ Database created successfully");
     } catch (error) {
         if (error.code === "42P04") {
-            console.log("ℹ️  Database already exists");
+            console.log("ℹ️  Database already exists, using existing database");
         } else {
             console.error("❌ Error creating database:", error.message);
+            throw error;
         }
     } finally {
         await adminPool.end();
@@ -45,74 +46,17 @@ async function setupDatabase() {
 
     try {
         /** -----------------------------
-         * A. RUN BASE SCHEMA SAFELY
+         * A. RUN BASE SCHEMA
          * ------------------------------ */
         console.log("📋 Running schema migrations...");
 
         let schema = fs.readFileSync(path.join(__dirname, "database", "schema.sql"), "utf-8");
+        await appPool.query(schema);
 
-        // Wrap schema execution in a safe block
-        try {
-            await appPool.query(schema);
-        } catch (err) {
-            if (err.code === "42710") {
-                console.log("ℹ️ Trigger already exists. Skipping trigger creation...");
-            } else {
-                throw err;
-            }
-        }
-
-        console.log("✅ Base schema created successfully");
+        console.log("✅ All tables created successfully");
 
         /** -----------------------------
-         * ENSURE TRIGGER DOES NOT FAIL IF EXISTS
-         * ------------------------------ */
-        await appPool.query(`
-            DO $$
-            BEGIN
-                IF NOT EXISTS (
-                    SELECT 1 FROM pg_trigger WHERE tgname = 'update_users_updated_at'
-                ) THEN
-                    CREATE TRIGGER update_users_updated_at
-                    BEFORE UPDATE ON users
-                    FOR EACH ROW
-                    EXECUTE FUNCTION update_updated_at_column();
-                END IF;
-            END$$;
-        `);
-
-        console.log("🔧 Safe trigger ensured");
-
-        /** -----------------------------
-         * B. UPDATE USERS TABLE
-         * ------------------------------ */
-        console.log("🔧 Updating users table...");
-        await appPool.query(`
-            ALTER TABLE IF EXISTS users
-            ADD COLUMN IF NOT EXISTS year INTEGER,
-            ADD COLUMN IF NOT EXISTS semester INTEGER,
-            ADD COLUMN IF NOT EXISTS branch VARCHAR(100),
-            ADD COLUMN IF NOT EXISTS college VARCHAR(255);
-        `);
-        console.log("✅ Users table updated");
-
-        /** -----------------------------
-         * C. TODOS TABLE
-         * ------------------------------ */
-        console.log("🔧 Creating todos table...");
-        await appPool.query(`
-            CREATE TABLE IF NOT EXISTS todos (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                text TEXT NOT NULL,
-                completed BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-        console.log("✅ Todos table ready");
-
-        /** -----------------------------
-         * D. SUBJECTS SEED
+         * B. SEED SUBJECTS
          * ------------------------------ */
         console.log("🌱 Seeding subjects...");
         const subjects = [
@@ -136,73 +80,61 @@ async function setupDatabase() {
         console.log("✅ Subjects seeded");
 
         /** -----------------------------
-         * E. SEED USERS
+         * C. SEED USERS
          * ------------------------------ */
         console.log("👤 Seeding users...");
         const passwordHash = await bcrypt.hash("password123", 10);
 
-        // TEACHER
-        const teacherRes = await appPool.query(
-            `
-            INSERT INTO users (email, password_hash, full_name, role)
-            VALUES ($1, $2, $3, 'teacher')
-            ON CONFLICT (email) DO UPDATE SET full_name = EXCLUDED.full_name
-            RETURNING id
-        `,
-            ["teacher@example.com", passwordHash, "John Professor"]
-        );
-
-        const teacherId = teacherRes.rows[0].id;
-
-        // STUDENT
+        // TEACHER (in teachers table)
+        console.log("  → Creating teacher account...");
         await appPool.query(
             `
-            INSERT INTO users (email, password_hash, full_name, role, branch, year, semester, college)
-            VALUES ($1, $2, $3, 'student', 'CSE', 2, 3, 'Engineering College')
+            INSERT INTO teachers (email, password_hash, full_name, department)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (email) DO UPDATE SET 
+                full_name = EXCLUDED.full_name,
+                department = EXCLUDED.department
+        `,
+            ["teacher@example.com", passwordHash, "John Professor", "Computer Science"]
+        );
+        console.log("  ✅ Teacher account created");
+
+        // STUDENT (in users table)
+        console.log("  → Creating student account...");
+        await appPool.query(
+            `
+            INSERT INTO users (email, password_hash, full_name, branch, year, semester, college)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (email) DO UPDATE SET
                 branch = EXCLUDED.branch,
                 year = EXCLUDED.year,
                 semester = EXCLUDED.semester,
                 college = EXCLUDED.college
         `,
-            ["student@example.com", passwordHash, "Alice Student"]
+            ["student@example.com", passwordHash, "Alice Student", "CSE", 2, 3, "Engineering College"]
         );
-
-        console.log("✅ Users seeded");
-
-        /** -----------------------------
-         * F. COURSES
-         * ------------------------------ */
-        console.log("📚 Seeding classes...");
-        const classes = [
-            { code: "CS201-A", name: "Data Structures - Section A" },
-            { code: "CS202-A", name: "Digital Logic - Section A" },
-        ];
-
-        for (const cls of classes) {
-            await appPool.query(
-                `
-                INSERT INTO classes (class_code, class_name, teacher_id)
-                VALUES ($1, $2, $3)
-                ON CONFLICT (class_code) DO NOTHING
-            `,
-                [cls.code, cls.name, teacherId]
-            );
-        }
-
-        console.log("✅ Classes seeded");
+        console.log("  ✅ Student account created");
 
         console.log("\n🎉 Database setup completed!\n");
         console.log("Credentials:");
         console.log(" Student → student@example.com / password123");
         console.log(" Teacher → teacher@example.com / password123");
         console.log("\nStart server using: npm run dev\n");
+
     } catch (error) {
         console.error("❌ Error setting up database:", error);
-        process.exit(1);
+        throw error;
     } finally {
         await appPool.end();
     }
 }
 
-setupDatabase();
+setupDatabase()
+    .then(() => {
+        console.log("✅ Setup finished successfully");
+        process.exit(0);
+    })
+    .catch((err) => {
+        console.error("💥 Setup failed:", err);
+        process.exit(1);
+    });

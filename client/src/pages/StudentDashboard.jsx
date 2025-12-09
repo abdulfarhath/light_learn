@@ -10,17 +10,20 @@ import { todosAPI } from '../features/todos';
 const StudentDashboard = () => {
     const { user } = useAuthStore();
     const navigate = useNavigate();
+
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         enrolledClasses: 0,
         attendedSessions: 0,
         completedActivities: 0
     });
+
     const [recentClasses, setRecentClasses] = useState([]);
     const [recentLessons, setRecentLessons] = useState([]);
     const [todos, setTodos] = useState([]);
     const [newTodo, setNewTodo] = useState('');
 
+    // Load Todos
     useEffect(() => {
         fetchTodos();
     }, []);
@@ -34,6 +37,7 @@ const StudentDashboard = () => {
         }
     };
 
+    // Load Dashboard Data
     useEffect(() => {
         fetchDashboardData();
     }, []);
@@ -41,17 +45,14 @@ const StudentDashboard = () => {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
+
             const response = await classAPI.getMyClasses('student');
             const classes = response.classes || [];
 
             setRecentClasses(classes.slice(0, 3));
 
-            // Fetch lessons for enrolled classes
+            // Fetch lessons for student
             try {
-                // For now, fetch all lessons (or implement getStudentLessons in backend)
-                // Since we don't have a specific endpoint for "my enrolled lessons", 
-                // we might need to add one. For now, let's use a placeholder or fetch all if public.
-                // Actually, let's add the endpoint first.
                 const lessons = await lessonsAPI.getStudentLessons();
                 setRecentLessons(lessons.slice(0, 3));
             } catch (err) {
@@ -60,9 +61,10 @@ const StudentDashboard = () => {
 
             setStats({
                 enrolledClasses: classes.length,
-                attendedSessions: 0, // Placeholder
-                completedActivities: 0 // Placeholder
+                attendedSessions: 0,       // future update
+                completedActivities: 0     // future update
             });
+
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         } finally {
@@ -70,25 +72,24 @@ const StudentDashboard = () => {
         }
     };
 
+    // Todo actions
     const addTodo = async (e) => {
         e.preventDefault();
-        if (newTodo.trim()) {
-            try {
-                const data = await todosAPI.addTodo(newTodo.trim());
-                setTodos([data.todo, ...todos]);
-                setNewTodo('');
-            } catch (error) {
-                console.error('Error adding todo:', error);
-            }
+        if (!newTodo.trim()) return;
+
+        try {
+            const data = await todosAPI.addTodo(newTodo.trim());
+            setTodos([data.todo, ...todos]);
+            setNewTodo('');
+        } catch (error) {
+            console.error('Error adding todo:', error);
         }
     };
 
     const toggleTodo = async (id) => {
         try {
             const data = await todosAPI.toggleTodo(id);
-            setTodos(todos.map(todo =>
-                todo.id === id ? data.todo : todo
-            ));
+            setTodos(todos.map(todo => (todo.id === id ? data.todo : todo)));
         } catch (error) {
             console.error('Error toggling todo:', error);
         }
@@ -106,40 +107,8 @@ const StudentDashboard = () => {
     return (
         <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 max-w-7xl mx-auto w-full no-scrollbar">
             <div className="flex flex-col gap-6">
-                {/* Welcome Section
-                <div className="bg-gradient-to-r from-primary to-accent p-10 rounded-2xl text-center text-white shadow-lg animate-slide-up relative overflow-hidden">
-                    <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]"></div>
-                    <div className="relative z-10">
-                        <div className="mb-6">
-                            <h1 className="text-3xl font-bold mb-2">
-                                Welcome back, <span className="text-white">{user?.full_name}</span>! 👋
-                            </h1>
-                            <p className="text-lg opacity-90 max-w-2xl mx-auto">
-                                Ready to continue your learning journey?
-                            </p>
-                        </div>
-                        <div className="flex gap-4 flex-wrap justify-center">
-                            <Button
-                                variant="primary"
-                                size="large"
-                                onClick={() => navigate('/live-session')}
-                                className="bg-white text-primary hover:bg-gray-100 border-none shadow-xl"
-                            >
-                                🎥 Join Live Session
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                size="large"
-                                onClick={() => navigate('/classes')}
-                                className="bg-white/10 backdrop-blur-md border border-white/30 text-white hover:bg-white/20"
-                            >
-                                📚 Browse Classes
-                            </Button>
-                        </div>
-                    </div>
-                </div> */}
 
-                {/* Stats Grid */}
+                {/* Stats Section */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
                     <StatCard
                         title="Enrolled Classes"
@@ -171,7 +140,7 @@ const StudentDashboard = () => {
                     />
                 </div>
 
-                {/* Todo List Section */}
+                {/* TODO LIST / Assignments */}
                 <Card className="w-full">
                     <div className="mb-4">
                         <h3 className="text-xl font-semibold text-text-main">✅ My Assignments</h3>
@@ -188,35 +157,28 @@ const StudentDashboard = () => {
                                 placeholder="Add a new assignment..."
                                 className="flex-1 px-4 py-2 bg-bg-dark border border-border rounded-lg text-text-main placeholder-text-muted focus:outline-none focus:border-primary transition-colors"
                             />
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                className="px-6"
-                            >
-                                Add
-                            </Button>
+                            <Button type="submit" variant="primary" className="px-6">Add</Button>
                         </div>
                     </form>
 
                     {/* Todo List */}
                     <div className="flex flex-col gap-2">
-                        {(!todos || todos.length === 0) ? (
+                        {!todos || todos.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-8 text-center">
                                 <div className="text-4xl mb-2">📝</div>
                                 <h4 className="font-semibold mb-1 text-text-main">No assignments yet</h4>
-                                <p className="text-text-muted text-sm">
-                                    Add your first assignment to get started
-                                </p>
+                                <p className="text-text-muted text-sm">Add your first assignment to get started</p>
                             </div>
                         ) : (
                             <div className="space-y-2 max-h-96 overflow-y-auto no-scrollbar">
-                                {Array.isArray(todos) && todos.map((todo) => (
+                                {todos.map(todo => (
                                     <div
                                         key={todo.id}
-                                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${todo.completed
-                                            ? 'bg-success/5 border-success/20'
-                                            : 'bg-bg-dark border-border hover:border-primary/30'
-                                            }`}
+                                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                                            todo.completed
+                                                ? 'bg-success/5 border-success/20'
+                                                : 'bg-bg-dark border-border hover:border-primary/30'
+                                        }`}
                                     >
                                         <input
                                             type="checkbox"
@@ -224,14 +186,17 @@ const StudentDashboard = () => {
                                             onChange={() => toggleTodo(todo.id)}
                                             className="w-5 h-5 rounded border-border cursor-pointer accent-primary"
                                         />
+
                                         <span
-                                            className={`flex-1 ${todo.completed
-                                                ? 'text-text-muted line-through'
-                                                : 'text-text-main'
-                                                }`}
+                                            className={`flex-1 ${
+                                                todo.completed
+                                                    ? 'text-text-muted line-through'
+                                                    : 'text-text-main'
+                                            }`}
                                         >
                                             {todo.text}
                                         </span>
+
                                         <button
                                             onClick={() => deleteTodo(todo.id)}
                                             className="px-3 py-1 text-sm text-danger hover:bg-danger/10 rounded-lg transition-colors"
@@ -246,7 +211,8 @@ const StudentDashboard = () => {
                         {todos.length > 0 && (
                             <div className="mt-3 pt-3 border-t border-border flex justify-between items-center text-sm text-text-muted">
                                 <span>
-                                    {todos.filter(t => !t.completed).length} pending, {todos.filter(t => t.completed).length} completed
+                                    {todos.filter(t => !t.completed).length} pending,{' '}
+                                    {todos.filter(t => t.completed).length} completed
                                 </span>
                                 {todos.some(t => t.completed) && (
                                     <button
@@ -262,8 +228,8 @@ const StudentDashboard = () => {
                 </Card>
             </div>
 
-            {/* Recent Lessons */}
-            <Card title="Recent Lessons" className="w-full">
+            {/* Recent Lessons Section */}
+            <Card title="Recent Lessons" className="w-full mt-2">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -275,25 +241,27 @@ const StudentDashboard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {(!recentLessons || recentLessons.length === 0) ? (
+                            {!recentLessons || recentLessons.length === 0 ? (
                                 <tr>
                                     <td colSpan="4" className="p-4 text-center text-text-muted">
                                         No lessons available yet.
                                     </td>
                                 </tr>
                             ) : (
-                                Array.isArray(recentLessons) && recentLessons.map((rec) => (
+                                recentLessons.map(rec => (
                                     <tr key={rec.id} className="border-b border-border hover:bg-bg-dark transition-colors">
                                         <td className="p-3 font-medium text-text-main">{rec.title}</td>
                                         <td className="p-3 text-text-muted">
                                             {new Date(rec.created_at).toLocaleDateString()}
                                         </td>
                                         <td className="p-3 text-text-muted">
-                                            {rec.duration ? new Date(rec.duration * 1000).toISOString().substr(11, 8) : '00:00:00'}
+                                            {rec.duration
+                                                ? new Date(rec.duration * 1000).toISOString().substr(11, 8)
+                                                : '00:00:00'}
                                         </td>
                                         <td className="p-3">
-                                            <Button 
-                                                variant="secondary" 
+                                            <Button
+                                                variant="secondary"
                                                 size="small"
                                                 onClick={() => navigate(`/lessons/${rec.id}`)}
                                             >

@@ -6,8 +6,10 @@ import StudentDashboard from './StudentDashboard';
 const Dashboard = () => {
     const { user } = useAuthStore();
 
+    console.log('🔄 Dashboard rendering - User:', user?.email, 'Role:', user?.role);
+
     if (!user) {
-        return <div>Loading...</div>;
+        return <div className="p-6 text-center">Loading user...</div>;
     }
 
     return user.role === 'teacher' ? <TeacherDashboard /> : <StudentDashboard />;

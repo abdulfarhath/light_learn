@@ -18,11 +18,10 @@ const Navbar = () => {
 
     const teacherLinks = [
         { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-        { path: '/classes', label: 'My Classes', icon: '🏫' },
         { path: '/courses', label: 'Courses', icon: '📚' },
-        { path: '/doubts', label: 'Doubts', icon: '❓' },
+        { path: '/create-quiz', label: 'Create Quiz', icon: '📝' },
+        { path: '/live-session', label: 'Live Class', icon: '🎥' },
         { path: '/schedule', label: 'Schedule', icon: '📅' },
-        { path: '/live-session', label: 'Live Session', icon: '🎥' },
         { path: '/profile', label: 'Profile', icon: '👤' },
     ];
 
@@ -53,14 +52,36 @@ const Navbar = () => {
                 fixed md:relative z-40 w-64 h-full bg-bg-panel border-r border-border flex flex-col transition-transform duration-300 ease-in-out
                 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
             `}>
-                {/* Logo */}
+                {/* Logo and Header */}
                 <div className="p-6 border-b border-border">
-                    <Link to="/dashboard" className="flex items-center gap-2 text-2xl font-bold text-text-main">
-                        <span className="text-3xl">🎓</span>
-                        <span>
-                            Light<span className="text-primary">Learn</span>
-                        </span>
-                    </Link>
+                    <div className="flex items-center justify-between md:justify-start gap-4">
+                        <Link to="/dashboard" className="flex items-center gap-3">
+                            <div className="text-2xl">🎓</div>
+                            <div>
+                                <h1 className="text-xl font-bold text-text-main">LightLearn</h1>
+                                <p className="text-xs text-text-muted hidden md:block">Smart Education</p>
+                            </div>
+                        </Link>
+
+                        {/* Create Course Button - Teachers Only */}
+                        {user?.role === 'teacher' && (
+                            <button
+                                onClick={() => navigate('/create-course')}
+                                className="hidden md:flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-all transform hover:scale-105 font-medium shadow-lg shadow-primary/30"
+                            >
+                                <span>+</span>
+                                <span>Create Course</span>
+                            </button>
+                        )}
+
+                        {/* Mobile Menu Toggle */}
+                        <button
+                            className="md:hidden p-2 rounded-lg hover:bg-bg-hover transition-colors text-text-main"
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        >
+                            {mobileMenuOpen ? '✕' : '☰'}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Navigation Links */}
@@ -96,10 +117,10 @@ const Navbar = () => {
                             </p>
                         </div>
                     </div>
-                    
+
                     <div className="flex gap-2">
                         <ThemeToggle />
-                        <button 
+                        <button
                             onClick={handleLogout}
                             className="flex-1 flex items-center justify-center gap-2 p-2 rounded-lg bg-bg-hover hover:bg-red-500/10 hover:text-red-500 transition-colors text-sm font-medium text-text-secondary"
                         >
@@ -111,7 +132,7 @@ const Navbar = () => {
 
             {/* Overlay for mobile */}
             {mobileMenuOpen && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/50 z-30 md:hidden"
                     onClick={() => setMobileMenuOpen(false)}
                 />

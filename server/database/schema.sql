@@ -1,120 +1,93 @@
 -- ============================================
--- USERS TABLE
+-- STUDENTS TABLE (formerly users, now student-only)
 -- ============================================
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('teacher', 'student')),
+    role VARCHAR(50) DEFAULT 'student' NOT NULL,
+    branch VARCHAR(100),
+    year INTEGER,
+    semester INTEGER,
+    college VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes for users table
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
 -- ============================================
--- CLASSES TABLE
+-- TEACHERS TABLE
 -- ============================================
-CREATE TABLE IF NOT EXISTS classes (
+CREATE TABLE IF NOT EXISTS teachers (
     id SERIAL PRIMARY KEY,
-    class_code VARCHAR(20) UNIQUE NOT NULL,
-    class_name VARCHAR(255) NOT NULL,
-    teacher_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    department VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexes for classes table
-CREATE INDEX IF NOT EXISTS idx_classes_teacher_id ON classes(teacher_id);
-CREATE INDEX IF NOT EXISTS idx_classes_class_code ON classes(class_code);
+-- Indexes for teachers table
+CREATE INDEX IF NOT EXISTS idx_teachers_email ON teachers(email);
 
 -- ============================================
--- ENROLLMENTS TABLE
+-- COURSES TABLE
 -- ============================================
-CREATE TABLE IF NOT EXISTS enrollments (
+CREATE TABLE IF NOT EXISTS courses (
     id SERIAL PRIMARY KEY,
-    student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
-    enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(student_id, class_id)
-);
-
--- Indexes for enrollments table
-CREATE INDEX IF NOT EXISTS idx_enrollments_student_id ON enrollments(student_id);
-CREATE INDEX IF NOT EXISTS idx_enrollments_class_id ON enrollments(class_id);
-
--- ============================================
--- RESOURCES TABLE
--- ============================================
-CREATE TABLE IF NOT EXISTS resources (
-    id SERIAL PRIMARY KEY,
-    class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
-    filename VARCHAR(255) NOT NULL,
-    file_size INTEGER,
-    file_type VARCHAR(100),
-    file_data BYTEA,
-    uploaded_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Indexes for resources table
-CREATE INDEX IF NOT EXISTS idx_resources_class_id ON resources(class_id);
-CREATE INDEX IF NOT EXISTS idx_resources_uploaded_by ON resources(uploaded_by);
-
--- ============================================
--- QUIZZES TABLE
--- ============================================
-CREATE TABLE IF NOT EXISTS quizzes (
-    id SERIAL PRIMARY KEY,
-    class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+    teacher_id INTEGER NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
-    questions JSONB NOT NULL,
-    created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    description TEXT,
+    status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexes for quizzes table
-CREATE INDEX IF NOT EXISTS idx_quizzes_class_id ON quizzes(class_id);
-CREATE INDEX IF NOT EXISTS idx_quizzes_created_by ON quizzes(created_by);
+-- Indexes for courses table
+CREATE INDEX IF NOT EXISTS idx_courses_teacher_id ON courses(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_courses_status ON courses(status);
 
 -- ============================================
--- QUIZ RESPONSES TABLE
+-- COURSE TOPICS TABLE
 -- ============================================
-CREATE TABLE IF NOT EXISTS quiz_responses (
+CREATE TABLE IF NOT EXISTS course_topics (
     id SERIAL PRIMARY KEY,
-    quiz_id INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
-    student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    answers JSONB NOT NULL,
-    score INTEGER,
-    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(quiz_id, student_id)
+    course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    order_index INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexes for quiz_responses table
-CREATE INDEX IF NOT EXISTS idx_quiz_responses_quiz_id ON quiz_responses(quiz_id);
-CREATE INDEX IF NOT EXISTS idx_quiz_responses_student_id ON quiz_responses(student_id);
+-- Indexes for course_topics table
+CREATE INDEX IF NOT EXISTS idx_course_topics_course_id ON course_topics(course_id);
+CREATE INDEX IF NOT EXISTS idx_course_topics_order ON course_topics(course_id, order_index);
 
 -- ============================================
--- ATTENDANCE TABLE
+-- COURSE MATERIALS TABLE
 -- ============================================
-CREATE TABLE IF NOT EXISTS attendance (
+CREATE TABLE IF NOT EXISTS course_materials (
     id SERIAL PRIMARY KEY,
-    class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
-    student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    session_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    join_time TIMESTAMP,
-    leave_time TIMESTAMP,
-    duration_minutes INTEGER,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    topic_id INTEGER NOT NULL REFERENCES course_topics(id) ON DELETE CASCADE,
+    material_type VARCHAR(50) NOT NULL CHECK (material_type IN ('ppt', 'pdf', 'video', 'document')),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    file_name VARCHAR(255),
+    file_path TEXT,
+    file_size INTEGER,
+    order_index INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexes for attendance table
-CREATE INDEX IF NOT EXISTS idx_attendance_class_id ON attendance(class_id);
-CREATE INDEX IF NOT EXISTS idx_attendance_student_id ON attendance(student_id);
-CREATE INDEX IF NOT EXISTS idx_attendance_session_date ON attendance(session_date);
+-- Indexes for course_materials table
+CREATE INDEX IF NOT EXISTS idx_course_materials_topic_id ON course_materials(topic_id);
+CREATE INDEX IF NOT EXISTS idx_course_materials_type ON course_materials(material_type);
 
 -- ============================================
 -- TRIGGERS
@@ -129,12 +102,13 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Trigger for users table
+-- Drop triggers if they exist, then create them
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Trigger for classes table
-CREATE TRIGGER update_classes_updated_at BEFORE UPDATE ON classes
+DROP TRIGGER IF EXISTS update_teachers_updated_at ON teachers;
+CREATE TRIGGER update_teachers_updated_at BEFORE UPDATE ON teachers
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
@@ -158,15 +132,16 @@ CREATE INDEX IF NOT EXISTS idx_subjects_college_branch ON subjects(college, bran
 CREATE INDEX IF NOT EXISTS idx_subjects_year_semester ON subjects(year, semester);
 
 -- Trigger for subjects table
+DROP TRIGGER IF EXISTS update_subjects_updated_at ON subjects;
 CREATE TRIGGER update_subjects_updated_at BEFORE UPDATE ON subjects
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- ============================================
 -- DOUBTS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS doubts (
     id SERIAL PRIMARY KEY,
     student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    class_id INTEGER REFERENCES classes(id) ON DELETE SET NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     priority VARCHAR(20) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
@@ -176,7 +151,6 @@ CREATE TABLE IF NOT EXISTS doubts (
 );
 
 CREATE INDEX IF NOT EXISTS idx_doubts_student_id ON doubts(student_id);
-CREATE INDEX IF NOT EXISTS idx_doubts_class_id ON doubts(class_id);
 
 -- ============================================
 -- DOUBT ANSWERS TABLE
@@ -191,3 +165,15 @@ CREATE TABLE IF NOT EXISTS doubt_answers (
 
 CREATE INDEX IF NOT EXISTS idx_doubt_answers_doubt_id ON doubt_answers(doubt_id);
 
+-- ============================================
+-- TODOS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS todos (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    text TEXT NOT NULL,
+    completed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_todos_user_id ON todos(user_id);
