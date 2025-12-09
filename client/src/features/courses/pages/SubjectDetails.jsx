@@ -9,7 +9,7 @@ const MOCK_MODULES = [
         id: 1,
         title: "Module 1: Introduction",
         topics: [
-            { id: 101, title: "Course Overview", duration: "5m", type: "video", videoUrl: "https://www.youtube.com/embed/M_o6axw830g" }, // Educational video example
+            { id: 101, title: "Course Overview", duration: "5m", type: "video", videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" }, // Educational video example
             { id: 102, title: "What is this subject?", duration: "12m", type: "video", videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" },
             { id: 103, title: "Syllabus Breakdown", duration: "8m", type: "pdf" }
         ]

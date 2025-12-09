@@ -17,12 +17,17 @@ const resourcesModule = require('./features/resources');
 const doubtsModule = require('./features/doubts');
 const todosFeature = require('./features/todos');
 const classesFeature = require('./features/classes');
+const teacherCoursesFeature = require('./features/teacher-courses');
+
+// Serve uploaded files
+app.use('/uploads', express.static('uploads'));
 
 // Mount feature routes
 app.use('/api/auth', authFeature.routes);
 app.use('/api/users', usersFeature.routes);
 app.use('/api/classes', classesFeature.routes);
 app.use('/api/courses', coursesFeature.routes);
+app.use('/api/teacher-courses', teacherCoursesFeature);
 app.use('/api/doubts', doubtsModule.routes);
 app.use('/api/todos', todosFeature.routes);
 

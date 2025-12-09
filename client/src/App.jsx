@@ -10,6 +10,7 @@ import DoubtsPage from './features/doubts/pages/DoubtsPage';
 import Dashboard from './pages/Dashboard';
 import Courses from './features/courses/pages/Courses';
 import SubjectDetails from './features/courses/pages/SubjectDetails';
+import CreateCourse from './features/teacher-courses/pages/CreateCourse';
 import LiveSession from './pages/LiveSession';
 
 import Schedule from './pages/Schedule';
@@ -86,6 +87,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <LiveSession />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/create-course"
+                        element={
+                            <ProtectedRoute>
+                                <CreateCourse />
                             </ProtectedRoute>
                         }
                     />
