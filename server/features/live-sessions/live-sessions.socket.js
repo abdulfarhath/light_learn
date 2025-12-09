@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const transcriptionService = require('./transcription.service');
 
 /**
  * Live Sessions Socket Handler
@@ -9,14 +10,17 @@ const path = require('path');
 class LiveSessionsSocket {
     constructor() {
         this.attendanceLog = {};
-        this.activeRecordings = {}; // room -> { eventStream, audioStream, startTime }
+        this.activeRecordings = {}; // room -> { eventStream, audioStream, startTime, id }
         this.storageDir = path.join(__dirname, '../../storage/recordings');
+        this.io = null; // Store io reference for async operations
     }
 
     /**
      * Initialize socket handlers
      */
     init(io) {
+        this.io = io; // Store for async operations
+
         io.on('connection', (socket) => {
             console.log(`User Connected: ${socket.id}`);
             this.attendanceLog[socket.id] = { joinTime: Date.now() };
@@ -57,18 +61,54 @@ class LiveSessionsSocket {
                 io.to(room).emit('recording_status', { isRecording: true });
             });
 
-            socket.on('stop_recording', (data) => {
+            socket.on('stop_recording', async (data) => {
                 const { room } = data;
                 const rec = this.activeRecordings[room];
                 if (!rec) return;
 
-                console.log(`Stopped recording for room ${room}`);
-                
+                const sessionId = rec.id;
+                console.log(`Stopped recording for room ${room}, session: ${sessionId}`);
+
                 rec.eventStream.end();
                 rec.audioStream.end();
                 delete this.activeRecordings[room];
 
+                // Notify recording stopped
                 io.to(room).emit('recording_status', { isRecording: false });
+
+                // Emit session ended with sessionId for processing
+                io.to(room).emit('session_ended', {
+                    sessionId,
+                    room,
+                    message: 'Recording stopped. Processing transcription...'
+                });
+
+                // Process transcription asynchronously
+                try {
+                    console.log(`Starting transcription for session: ${sessionId}`);
+                    io.to(room).emit('transcription_status', {
+                        status: 'processing',
+                        sessionId,
+                        message: 'Transcribing audio...'
+                    });
+
+                    const result = await transcriptionService.processSession(sessionId);
+
+                    console.log(`Transcription complete for session: ${sessionId}`);
+                    io.to(room).emit('transcription_complete', {
+                        sessionId,
+                        transcription: result.transcription,
+                        summary: result.summary,
+                        mock: result.mock
+                    });
+
+                } catch (error) {
+                    console.error(`Transcription failed for session ${sessionId}:`, error.message);
+                    io.to(room).emit('transcription_error', {
+                        sessionId,
+                        error: error.message
+                    });
+                }
             });
 
             // Core relays - drawing, video, audio

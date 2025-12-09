@@ -51,6 +51,7 @@ app.use("/api/teacher-courses", teacherCoursesFeature);
 app.use("/api/quizzes", quizzesFeature.routes);
 app.use("/api/polls", pollsFeature.routes);
 app.use("/api/assignments", assignmentsFeature.routes);
+app.use("/api/live-sessions", liveSessionsModule.routes);
 
 // ------------------------------
 // Health Check
