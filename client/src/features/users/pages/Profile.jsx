@@ -1,41 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import useAuthStore from '../../../stores/authStore';
-import { userAPI } from '../services/userAPI';
+import { authAPI } from '../../auth/services/authAPI';
 
 const Profile = () => {
-    const { user } = useAuthStore();
+    const { user, updateUser } = useAuthStore();
     const [loading, setLoading] = useState(true);
     const [profileData, setProfileData] = useState(null);
 
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                // Assuming userAPI.getProfile() exists and works similarly to authAPI.getProfile()
-                // If not, we might need to adjust this. For now, using userAPI as imported.
-                // However, the original code used authAPI which wasn't imported. 
-                // I'll stick to using the store user for now if API fetch fails or isn't ready.
-                // If we need to fetch fresh data:
-                // const response = await userAPI.getProfile(user.id); 
-                // setProfileData(response.user);
+                // 1. Fetch fresh data from the server (endpoint: /auth/me)
+                const response = await authAPI.getProfile();
 
-                // For now, since we have user in store, we can just use that or simulate fetch
-                if (user) {
-                    setProfileData(user);
+                // 2. Update local state
+                setProfileData(response.user);
+
+                // 3. Update the global store so the data persists
+                if (updateUser) {
+                    updateUser(response.user);
                 }
             } catch (error) {
                 console.error('Error fetching profile:', error);
+                // Fallback to existing store data if fetch fails
+                if (user) setProfileData(user);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchProfile();
-    }, [user]);
+    }, []);
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-bg-dark text-text-main">
-                <div className="spinner"></div>
+            <div className="flex-1 p-6 overflow-y-auto w-full max-w-4xl mx-auto flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
         );
     }
@@ -78,6 +78,36 @@ const Profile = () => {
                                 {displayUser?.role}
                             </span>
                         </div>
+
+                        {/* --- ADDED ACADEMIC FIELDS --- */}
+                        {displayUser?.college && (
+                            <div className="flex justify-between py-3 border-b border-border">
+                                <span className="text-text-muted">College</span>
+                                <span className="font-medium text-text-main text-right">{displayUser.college}</span>
+                            </div>
+                        )}
+
+                        {displayUser?.branch && (
+                            <div className="flex justify-between py-3 border-b border-border">
+                                <span className="text-text-muted">Branch</span>
+                                <span className="font-medium text-text-main">{displayUser.branch}</span>
+                            </div>
+                        )}
+
+                        {displayUser?.year && (
+                            <div className="flex justify-between py-3 border-b border-border">
+                                <span className="text-text-muted">Year</span>
+                                <span className="font-medium text-text-main">{displayUser.year}</span>
+                            </div>
+                        )}
+
+                        {displayUser?.semester && (
+                            <div className="flex justify-between py-3 border-b border-border">
+                                <span className="text-text-muted">Semester</span>
+                                <span className="font-medium text-text-main">{displayUser.semester}</span>
+                            </div>
+                        )}
+                        {/* ----------------------------- */}
 
                         <div className="flex justify-between py-3 border-b border-border">
                             <span className="text-text-muted">Account ID</span>

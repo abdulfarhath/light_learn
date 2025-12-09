@@ -18,7 +18,7 @@ class AuthController {
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const { email, password, full_name, role } = req.body;
+            const { email, password, full_name, role, year, semester, branch, college, department } = req.body;
 
             // Check if user already exists
             const existingUser = await authService.findUserByEmail(email);
@@ -26,8 +26,22 @@ class AuthController {
                 return res.status(409).json({ error: 'User with this email already exists' });
             }
 
-            // Create new user
-            const newUser = await authService.createUser(email, password, full_name, role);
+            let newUser;
+
+            // Create user based on role
+            if (role === 'teacher') {
+                newUser = await authService.createTeacher(email, password, full_name, department);
+            } else if (role === 'student') {
+                const profileData = {
+                    year: year || null,
+                    semester: semester || null,
+                    branch: branch || null,
+                    college: college || null
+                };
+                newUser = await authService.createStudent(email, password, full_name, profileData);
+            } else {
+                return res.status(400).json({ error: 'Invalid role specified' });
+            }
 
             res.status(201).json({
                 message: 'User registered successfully',
@@ -54,7 +68,7 @@ class AuthController {
 
             const { email, password } = req.body;
 
-            // Find user by email
+            // Find user by email (checks both student and teacher tables)
             const user = await authService.findUserByEmail(email);
             if (!user) {
                 return res.status(401).json({ error: 'Invalid email or password' });
@@ -90,13 +104,15 @@ class AuthController {
      */
     async getMe(req, res) {
         try {
-            const user = await authService.findUserById(req.user.id);
+            // req.user comes from authenticateToken middleware
+            const user = await authService.findUserById(req.user.id, req.user.role);
 
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
             }
 
-            res.json({ user });
+            const sanitizedUser = authService.sanitizeUser(user);
+            res.json({ user: sanitizedUser });
         } catch (error) {
             console.error('Get profile error:', error);
             res.status(500).json({ error: 'Server error' });

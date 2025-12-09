@@ -1,53 +1,82 @@
+// Make sure this path points to your database config
+// Database connection pool
 const pool = require('../../shared/config/database');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
-/**
- * Users Service - Handles business logic for user operations
- */
-class UsersService {
+class AuthService {
     /**
-     * Get user by ID
+     * Create a new user with profile details
      */
-    async getUserById(userId) {
+    async createUser(email, password, full_name, role, profileData = {}) {
+        const { year, semester, branch, college } = profileData;
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        // UPDATED: Insert and Return the new profile columns
         const result = await pool.query(
-            'SELECT id, email, full_name, role, created_at FROM users WHERE id = $1',
-            [userId]
+            `INSERT INTO users (email, password_hash, full_name, role, year, semester, branch, college)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING id, email, full_name, role, created_at, year, semester, branch, college`,
+            [email, passwordHash, full_name, role, year, semester, branch, college]
+        );
+
+        return result.rows[0];
+    }
+
+    /**
+     * Find user by email (Used for Login)
+     */
+    async findUserByEmail(email) {
+        // UPDATED: Select all columns including year, semester, etc.
+        const result = await pool.query(
+            `SELECT * FROM users WHERE email = $1`,
+            [email]
         );
         return result.rows[0];
     }
 
     /**
-     * Get all teachers
+     * Find user by ID (Used for 'Me' / Refreshing Session)
      */
-    async getAllTeachers() {
+    async findUserById(id) {
+        // UPDATED: Explicitly select the profile columns
         const result = await pool.query(
-            'SELECT id, email, full_name, created_at FROM users WHERE role = $1',
-            ['teacher']
-        );
-        return result.rows;
-    }
-
-    /**
-     * Get all students
-     */
-    async getAllStudents() {
-        const result = await pool.query(
-            'SELECT id, email, full_name, created_at FROM users WHERE role = $1',
-            ['student']
-        );
-        return result.rows;
-    }
-
-    /**
-     * Update user profile
-     */
-    async updateUser(userId, updates) {
-        const { full_name } = updates;
-        const result = await pool.query(
-            'UPDATE users SET full_name = $1 WHERE id = $2 RETURNING id, email, full_name, role, created_at',
-            [full_name, userId]
+            `SELECT id, email, full_name, role, password_hash, created_at, year, semester, branch, college 
+             FROM users WHERE id = $1`,
+            [id]
         );
         return result.rows[0];
+    }
+
+    async verifyPassword(password, hash) {
+        return await bcrypt.compare(password, hash);
+    }
+
+    generateToken(user) {
+        return jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            process.env.JWT_SECRET || 'your_jwt_secret',
+            { expiresIn: '24h' }
+        );
+    }
+
+    /**
+     * Sanitize user data for response
+     */
+    sanitizeUser(user) {
+        return {
+            id: user.id,
+            email: user.email,
+            full_name: user.full_name,
+            role: user.role,
+            created_at: user.created_at,
+            // UPDATED: Include new fields in the safe response
+            year: user.year,
+            semester: user.semester,
+            branch: user.branch,
+            college: user.college
+        };
     }
 }
 
-module.exports = new UsersService();
+module.exports = new AuthService();

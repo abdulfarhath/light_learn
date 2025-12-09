@@ -20,6 +20,9 @@ router.get('/my-classes', authenticateToken, authorizeRoles('teacher'), classesC
 // GET /api/classes/enrolled - Get student's enrolled classes
 router.get('/enrolled', authenticateToken, authorizeRoles('student'), classesController.getEnrolledClasses);
 
+// GET /api/classes - Get all classes
+router.get('/', authenticateToken, classesController.getAllClasses);
+
 // GET /api/classes/:id - Get class details
 router.get('/:id', authenticateToken, classesController.getClassDetails);
 

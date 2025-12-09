@@ -104,6 +104,21 @@ class ClassesController {
     }
 
     /**
+     * @route   GET /api/classes
+     * @desc    Get all available classes
+     * @access  Private
+     */
+    async getAllClasses(req, res) {
+        try {
+            const classes = await classesService.getAllClasses();
+            res.json({ classes });
+        } catch (error) {
+            console.error('Get all classes error:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
+
+    /**
      * @route   GET /api/classes/:id
      * @desc    Get class details
      * @access  Private
