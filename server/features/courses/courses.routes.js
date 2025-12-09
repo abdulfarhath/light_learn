@@ -7,6 +7,9 @@ const { authenticateToken, authorizeRoles } = require('../../middleware/auth');
 router.use(authenticateToken);
 
 router.get('/subjects', coursesController.getSubjects);
+router.get('/subjects/:id', coursesController.getSubjectById);
 router.post('/create', authorizeRoles('teacher'), coursesController.createSubject);
+router.put('/subjects/:id', authorizeRoles('teacher'), coursesController.updateSubject);
+router.delete('/subjects/:id', authorizeRoles('teacher'), coursesController.deleteSubject);
 
 module.exports = router;

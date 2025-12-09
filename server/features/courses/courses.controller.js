@@ -11,14 +11,14 @@ class CoursesController {
                 return res.status(404).json({ error: 'User not found' });
             }
 
-            // Required fields
+            // If profile fields are missing, return all subjects without filtering
             if (!user.year || !user.semester || !user.branch || !user.college) {
-                return res.status(400).json({
-                    error: 'Incomplete profile. Please update your profile with year, semester, branch, and college.'
-                });
+                console.log('User profile incomplete, returning all subjects');
+                const subjects = await coursesService.getAllSubjects();
+                return res.json({ subjects });
             }
 
-            // ⭐ Normalize filters (fixes your empty subjects bug)
+            // Normalize filters (fixes your empty subjects bug)
             const filters = {
                 year: Number(user.year),
                 semester: Number(user.semester),
@@ -56,6 +56,54 @@ class CoursesController {
             if (error.code === '23505') { // Unique violation
                 return res.status(400).json({ error: 'Subject code already exists for this context' });
             }
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
+
+    async getSubjectById(req, res) {
+        try {
+            const { id } = req.params;
+            const subject = await coursesService.getSubjectById(id);
+
+            if (!subject) {
+                return res.status(404).json({ error: 'Subject not found' });
+            }
+
+            res.json({ subject });
+        } catch (error) {
+            console.error('Get subject error:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
+
+    async updateSubject(req, res) {
+        try {
+            const { id } = req.params;
+            const updates = req.body;
+
+            const subject = await coursesService.updateSubject(id, updates);
+
+            if (!subject) {
+                return res.status(404).json({ error: 'Subject not found' });
+            }
+
+            res.json({ subject });
+        } catch (error) {
+            console.error('Update subject error:', error);
+            if (error.code === '23505') {
+                return res.status(400).json({ error: 'Subject code already exists for this context' });
+            }
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
+
+    async deleteSubject(req, res) {
+        try {
+            const { id } = req.params;
+            await coursesService.deleteSubject(id);
+            res.json({ message: 'Subject deleted successfully' });
+        } catch (error) {
+            console.error('Delete subject error:', error);
             res.status(500).json({ error: 'Server error' });
         }
     }

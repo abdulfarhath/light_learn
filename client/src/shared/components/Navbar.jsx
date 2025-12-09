@@ -18,11 +18,10 @@ const Navbar = () => {
 
     const teacherLinks = [
         { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-        { path: '/classes', label: 'My Classes', icon: '🏫' },
         { path: '/courses', label: 'Courses', icon: '📚' },
-        { path: '/doubts', label: 'Doubts', icon: '❓' },
+        { path: '/create-quiz', label: 'Create Quiz', icon: '📝' },
+        { path: '/live-session', label: 'Live Class', icon: '🎥' },
         { path: '/schedule', label: 'Schedule', icon: '📅' },
-        { path: '/live-session', label: 'Live Session', icon: '🎥' },
         { path: '/profile', label: 'Profile', icon: '👤' },
     ];
 

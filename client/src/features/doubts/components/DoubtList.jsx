@@ -69,9 +69,8 @@ const DoubtList = ({ doubts, currentUser, onAddAnswer, onToggleStatus }) => {
                                 <div className="flex justify-between items-start mb-2">
                                     <h4 className="text-sm font-semibold text-text-muted uppercase tracking-wider">Full Question</h4>
                                     
-                                    {/* LOGIC: Only the student who created the doubt can resolve it */}
-                                    {/* Note: In a real app, compare IDs (currentUser.id === doubt.student_id) instead of names */}
-                                    {currentUser.full_name === doubt.studentName && (
+                                    {/* Students and Teachers can resolve doubts */}
+                                    {(currentUser.full_name === doubt.studentName || currentUser.role === 'teacher') && (
                                         <button 
                                             onClick={() => onToggleStatus(doubt.id)}
                                             className={`text-xs px-3 py-1 rounded-full border transition-colors ${

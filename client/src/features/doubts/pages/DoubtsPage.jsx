@@ -16,14 +16,16 @@ const DoubtsPage = () => {
     useEffect(() => {
         const loadData = async () => {
             try {
+                console.log('📥 DoubtsPage: Loading doubts for user:', user.role);
                 const [doubtsData, classesData] = await Promise.all([
                     fetchDoubts(),
                     classAPI.getMyClasses(user.role)
                 ]);
+                console.log('📦 DoubtsPage: Received', doubtsData.length, 'doubts');
                 setDoubts(doubtsData);
                 setMyClasses(classesData);
             } catch (error) {
-                console.error("Failed to load data", error);
+                console.error("❌ Failed to load data", error);
             } finally {
                 setLoading(false);
             }

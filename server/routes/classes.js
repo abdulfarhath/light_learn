@@ -1,5 +1,5 @@
 const express = require('express');
-const pool = require('../config/database');
+const pool = require('../shared/config/database');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 const { generateClassCode } = require('../utils/generateClassCode');
 
@@ -85,7 +85,7 @@ router.post('/join', authenticateToken, authorizeRoles('student'), async (req, r
 
         // Check if already enrolled
         const enrollmentCheck = await pool.query(
-            'SELECT id FROM class_enrollments WHERE class_id = $1 AND student_id = $2',
+            'SELECT id FROM enrollments WHERE class_id = $1 AND student_id = $2',
             [classData.id, student_id]
         );
 
@@ -95,7 +95,7 @@ router.post('/join', authenticateToken, authorizeRoles('student'), async (req, r
 
         // Enroll student
         await pool.query(
-            'INSERT INTO class_enrollments (class_id, student_id) VALUES ($1, $2)',
+            'INSERT INTO enrollments (class_id, student_id) VALUES ($1, $2)',
             [classData.id, student_id]
         );
 
@@ -125,7 +125,7 @@ router.get('/my-classes', authenticateToken, authorizeRoles('teacher'), async (r
         const result = await pool.query(
             `SELECT c.*, COUNT(ce.student_id) as student_count
        FROM classes c
-       LEFT JOIN class_enrollments ce ON c.id = ce.class_id
+       LEFT JOIN enrollments ce ON c.id = ce.class_id
        WHERE c.teacher_id = $1
        GROUP BY c.id
        ORDER BY c.created_at DESC`,
@@ -151,10 +151,10 @@ router.get('/enrolled', authenticateToken, authorizeRoles('student'), async (req
         const result = await pool.query(
             `SELECT c.*, u.full_name as teacher_name, ce.enrolled_at,
        COUNT(ce2.student_id) as student_count
-       FROM class_enrollments ce
+       FROM enrollments ce
        JOIN classes c ON ce.class_id = c.id
        JOIN users u ON c.teacher_id = u.id
-       LEFT JOIN class_enrollments ce2 ON c.id = ce2.class_id
+       LEFT JOIN enrollments ce2 ON c.id = ce2.class_id
        WHERE ce.student_id = $1
        GROUP BY c.id, u.full_name, ce.enrolled_at
        ORDER BY ce.enrolled_at DESC`,
@@ -182,7 +182,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
        COUNT(ce.student_id) as student_count
        FROM classes c
        JOIN users u ON c.teacher_id = u.id
-       LEFT JOIN class_enrollments ce ON c.id = ce.class_id
+       LEFT JOIN enrollments ce ON c.id = ce.class_id
        WHERE c.id = $1
        GROUP BY c.id, u.full_name`,
             [class_id]
@@ -222,7 +222,7 @@ router.get('/:id/students', authenticateToken, authorizeRoles('teacher'), async 
         // Get enrolled students
         const result = await pool.query(
             `SELECT u.id, u.full_name, u.email, ce.enrolled_at
-       FROM class_enrollments ce
+       FROM enrollments ce
        JOIN users u ON ce.student_id = u.id
        WHERE ce.class_id = $1
        ORDER BY ce.enrolled_at DESC`,
