@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) DEFAULT 'student' NOT NULL,
     branch VARCHAR(100),
     year INTEGER,
     semester INTEGER,
@@ -32,6 +33,61 @@ CREATE TABLE IF NOT EXISTS teachers (
 
 -- Indexes for teachers table
 CREATE INDEX IF NOT EXISTS idx_teachers_email ON teachers(email);
+
+-- ============================================
+-- COURSES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS courses (
+    id SERIAL PRIMARY KEY,
+    teacher_id INTEGER NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for courses table
+CREATE INDEX IF NOT EXISTS idx_courses_teacher_id ON courses(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_courses_status ON courses(status);
+
+-- ============================================
+-- COURSE TOPICS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS course_topics (
+    id SERIAL PRIMARY KEY,
+    course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    order_index INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for course_topics table
+CREATE INDEX IF NOT EXISTS idx_course_topics_course_id ON course_topics(course_id);
+CREATE INDEX IF NOT EXISTS idx_course_topics_order ON course_topics(course_id, order_index);
+
+-- ============================================
+-- COURSE MATERIALS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS course_materials (
+    id SERIAL PRIMARY KEY,
+    topic_id INTEGER NOT NULL REFERENCES course_topics(id) ON DELETE CASCADE,
+    material_type VARCHAR(50) NOT NULL CHECK (material_type IN ('ppt', 'pdf', 'video', 'document')),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    file_name VARCHAR(255),
+    file_path TEXT,
+    file_size INTEGER,
+    order_index INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for course_materials table
+CREATE INDEX IF NOT EXISTS idx_course_materials_topic_id ON course_materials(topic_id);
+CREATE INDEX IF NOT EXISTS idx_course_materials_type ON course_materials(material_type);
 
 -- ============================================
 -- TRIGGERS

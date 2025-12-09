@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard';
 import Courses from './features/courses/pages/Courses';
 import TeacherCourses from './features/courses/pages/TeacherCourses';
 import SubjectDetails from './features/courses/pages/SubjectDetails';
+import CreateCourse from './features/teacher-courses/pages/CreateCourse';
 import LiveSession from './pages/LiveSession';
 import CreateQuiz from './pages/CreateQuiz';
 import useAuthStore from './stores/authStore';
@@ -109,6 +110,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <LiveSession />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/create-course"
+                        element={
+                            <ProtectedRoute>
+                                <CreateCourse />
                             </ProtectedRoute>
                         }
                     />
