@@ -107,6 +107,63 @@ class CoursesController {
             res.status(500).json({ error: 'Server error' });
         }
     }
+
+    // ============================================
+    // COURSE PROGRESS ENDPOINTS
+    // ============================================
+
+    /**
+     * Get progress for a specific subject
+     */
+    async getProgress(req, res) {
+        try {
+            const studentId = req.user.id;
+            const { subjectId } = req.params;
+
+            const progress = await coursesService.getProgress(studentId, subjectId);
+            const completedTopics = progress.map(p => p.topic_id);
+
+            res.json({ progress, completedTopics });
+        } catch (error) {
+            console.error('Get progress error:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
+
+    /**
+     * Get all course progress for dashboard
+     */
+    async getAllProgress(req, res) {
+        try {
+            const studentId = req.user.id;
+            const progress = await coursesService.getAllProgress(studentId);
+            res.json({ progress });
+        } catch (error) {
+            console.error('Get all progress error:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
+
+    /**
+     * Toggle topic completion
+     */
+    async toggleTopicCompletion(req, res) {
+        try {
+            const studentId = req.user.id;
+            const { subjectId } = req.params;
+            const { topicId } = req.body;
+
+            if (!topicId) {
+                return res.status(400).json({ error: 'Topic ID is required' });
+            }
+
+            const result = await coursesService.toggleTopicCompletion(studentId, subjectId, topicId);
+            res.json(result);
+        } catch (error) {
+            console.error('Toggle completion error:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
 }
 
 module.exports = new CoursesController();

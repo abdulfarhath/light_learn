@@ -123,16 +123,6 @@ const TeacherDashboard = () => {
     return (
         <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 max-w-7xl mx-auto w-full no-scrollbar">
             <div className="flex flex-col gap-6">
-                {/* Welcome Section - Compact */}
-                <div className="bg-gradient-to-r from-primary to-accent p-4 rounded-xl text-center text-white shadow-lg animate-slide-up relative overflow-hidden w-fit mx-auto">
-                    <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]"></div>
-                    <div className="relative z-10">
-                        <p className="text-sm font-semibold opacity-90">
-                            Welcome back, <span className="font-bold">{user?.full_name}</span>! 👋
-                        </p>
-                    </div>
-                </div>
-
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
                     <StatCard

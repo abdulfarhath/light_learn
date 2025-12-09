@@ -85,6 +85,91 @@ class CoursesService {
     async deleteSubject(subject_id) {
         await pool.query('DELETE FROM subjects WHERE id = $1', [subject_id]);
     }
+
+    // ============================================
+    // COURSE PROGRESS METHODS
+    // ============================================
+
+    /**
+     * Get progress for a student on a specific subject
+     */
+    async getProgress(student_id, subject_id) {
+        const result = await pool.query(
+            `SELECT topic_id, completed, completed_at
+             FROM course_progress
+             WHERE student_id = $1 AND subject_id = $2`,
+            [student_id, subject_id]
+        );
+        return result.rows;
+    }
+
+    /**
+     * Get all progress for a student (for dashboard)
+     */
+    async getAllProgress(student_id) {
+        const result = await pool.query(
+            `SELECT cp.subject_id, s.subject_name, s.subject_code,
+                    COUNT(cp.topic_id) as completed_topics
+             FROM course_progress cp
+             JOIN subjects s ON s.id = cp.subject_id
+             WHERE cp.student_id = $1 AND cp.completed = true
+             GROUP BY cp.subject_id, s.subject_name, s.subject_code
+             ORDER BY s.subject_name`,
+            [student_id]
+        );
+        return result.rows;
+    }
+
+    /**
+     * Toggle topic completion (add or remove)
+     */
+    async toggleTopicCompletion(student_id, subject_id, topic_id) {
+        // Check if already completed
+        const existing = await pool.query(
+            `SELECT id FROM course_progress
+             WHERE student_id = $1 AND subject_id = $2 AND topic_id = $3`,
+            [student_id, subject_id, topic_id]
+        );
+
+        if (existing.rows.length > 0) {
+            // Remove completion
+            await pool.query(
+                `DELETE FROM course_progress
+                 WHERE student_id = $1 AND subject_id = $2 AND topic_id = $3`,
+                [student_id, subject_id, topic_id]
+            );
+            return { completed: false, topic_id };
+        } else {
+            // Add completion
+            const result = await pool.query(
+                `INSERT INTO course_progress (student_id, subject_id, topic_id, completed)
+                 VALUES ($1, $2, $3, true)
+                 RETURNING *`,
+                [student_id, subject_id, topic_id]
+            );
+            return { completed: true, topic_id, completed_at: result.rows[0].completed_at };
+        }
+    }
+
+    /**
+     * Mark multiple topics as complete
+     */
+    async markTopicsComplete(student_id, subject_id, topic_ids) {
+        const values = topic_ids.map((topic_id, index) =>
+            `($1, $2, $${index + 3}, true)`
+        ).join(', ');
+
+        const params = [student_id, subject_id, ...topic_ids];
+
+        await pool.query(
+            `INSERT INTO course_progress (student_id, subject_id, topic_id, completed)
+             VALUES ${values}
+             ON CONFLICT (student_id, subject_id, topic_id) DO NOTHING`,
+            params
+        );
+
+        return { marked: topic_ids.length };
+    }
 }
 
 module.exports = new CoursesService();

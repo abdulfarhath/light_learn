@@ -4,6 +4,9 @@ import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import useAuthStore from "../stores/authStore";
 import Navbar from "../shared/components/Navbar";
+import FocusMode from "../components/FocusMode";
+import BandwidthMonitor from "../components/BandwidthMonitor";
+import LiveTranscript from "../components/LiveTranscript";
 
 const SOCKET_URL = "http://localhost:3001";
 
@@ -151,7 +154,12 @@ function LiveSession() {
         if (!room || !username) return alert("Enter Name and Room ID");
         const userRole = user?.role || "student";
         setRole(userRole);
-        socket.emit("join_room", { room, username, role: userRole });
+        socket.emit("join_room", {
+            room,
+            username,
+            role: userRole,
+            userId: user?.id
+        });
         setIsJoined(true);
     };
 
@@ -308,6 +316,15 @@ function LiveSession() {
     // --- RENDER LIVE CLASSROOM ---
     return (
         <div className="flex flex-col md:flex-row h-screen bg-bg-dark text-text-main overflow-hidden">
+            {/* Focus Mode Component */}
+            {isJoined && <FocusMode socket={socket} room={room} isTeacher={role === 'teacher'} />}
+
+            {/* Bandwidth Monitor */}
+            {isJoined && <BandwidthMonitor socket={socket} />}
+
+            {/* Live Transcript for Students */}
+            {isJoined && <LiveTranscript isTeacher={role === 'teacher'} />}
+
             {/* Mobile Controls Toggle */}
             <button
                 className="md:hidden fixed top-4 right-4 z-50 bg-primary text-white p-3 rounded-full shadow-lg"

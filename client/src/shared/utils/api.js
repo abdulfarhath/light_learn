@@ -113,6 +113,27 @@ export const classAPI = {
     },
 };
 
+// Course Progress API endpoints
+export const courseProgressAPI = {
+    // Get all progress for dashboard
+    getAllProgress: async () => {
+        const response = await api.get('/courses/progress');
+        return response.data;
+    },
+
+    // Get progress for a specific subject
+    getProgress: async (subjectId) => {
+        const response = await api.get(`/courses/progress/${subjectId}`);
+        return response.data;
+    },
+
+    // Toggle topic completion
+    toggleTopicCompletion: async (subjectId, topicId) => {
+        const response = await api.post(`/courses/progress/${subjectId}/toggle`, { topicId });
+        return response.data;
+    },
+};
+
 // Health check
 export const healthAPI = {
     check: async () => {

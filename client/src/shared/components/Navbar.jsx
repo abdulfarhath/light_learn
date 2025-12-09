@@ -19,6 +19,7 @@ const Navbar = () => {
     const teacherLinks = [
         { path: '/dashboard', label: 'Dashboard', icon: '📊' },
         { path: '/courses', label: 'Courses', icon: '📚' },
+        { path: '/doubts', label: 'Doubts', icon: '❓' },
         { path: '/create-quiz', label: 'Create Quiz', icon: '📝' },
         { path: '/live-session', label: 'Live Class', icon: '🎥' },
         { path: '/schedule', label: 'Schedule', icon: '📅' },

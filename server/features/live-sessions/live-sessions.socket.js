@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const liveSessionsService = require('./live-sessions.service');
 
 /**
  * Live Sessions Socket Handler
@@ -22,10 +23,30 @@ class LiveSessionsSocket {
             this.attendanceLog[socket.id] = { joinTime: Date.now() };
 
             // Room management
-            socket.on('join_room', (data) => {
+            socket.on('join_room', async (data) => {
                 socket.join(data.room);
                 console.log(`${data.username} (${data.role}) joined ${data.room}`);
-                
+
+                // Get or create session state and send to joining user
+                try {
+                    const sessionState = await liveSessionsService.getOrCreateSession(
+                        data.room,
+                        data.role === 'teacher' ? data.userId : null
+                    );
+
+                    // Send current focus timer state to the joining user
+                    socket.emit('focus-timer-update', {
+                        time: sessionState.focus_timer_seconds,
+                        isActive: sessionState.focus_timer_active
+                    });
+
+                    socket.emit('focus-visibility-update', {
+                        isVisible: sessionState.focus_timer_visible
+                    });
+                } catch (error) {
+                    console.error('Error loading session state:', error);
+                }
+
                 // Notify if recording is active
                 if (this.activeRecordings[data.room]) {
                     socket.emit('recording_status', { isRecording: true });
@@ -136,6 +157,51 @@ class LiveSessionsSocket {
 
             socket.on('submit_answer', (data) => {
                 socket.to(data.room).emit('receive_answer', data);
+            });
+
+            // --- FOCUS MODE FEATURES ---
+            socket.on('focus-timer-update', async (data) => {
+                try {
+                    // Persist to database
+                    await liveSessionsService.updateFocusTimer(
+                        data.room,
+                        data.time,
+                        data.isActive
+                    );
+
+                    // Broadcast to all clients in the room (including sender for confirmation)
+                    io.to(data.room).emit('focus-timer-update', {
+                        time: data.time,
+                        isActive: data.isActive
+                    });
+                } catch (error) {
+                    console.error('Error updating focus timer:', error);
+                }
+            });
+
+            socket.on('focus-visibility-update', async (data) => {
+                try {
+                    // Persist to database
+                    await liveSessionsService.updateFocusVisibility(
+                        data.room,
+                        data.isVisible
+                    );
+
+                    // Broadcast visibility toggle to all students
+                    socket.to(data.room).emit('focus-visibility-update', {
+                        isVisible: data.isVisible
+                    });
+                } catch (error) {
+                    console.error('Error updating focus visibility:', error);
+                }
+            });
+
+            socket.on('send-reaction', (data) => {
+                // Broadcast reaction to all clients in the room
+                io.to(data.room).emit('reaction-sent', {
+                    emoji: data.emoji,
+                    user: data.user
+                });
             });
 
             // Disconnect

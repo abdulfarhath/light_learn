@@ -14,6 +14,7 @@ const DoubtsPage = () => {
 
     // 1. Fetch doubts and classes from backend on load
     useEffect(() => {
+        if (!user) return;
         const loadData = async () => {
             try {
                 console.log('📥 DoubtsPage: Loading doubts for user:', user.role);

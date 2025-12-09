@@ -4,8 +4,11 @@ import useAuthStore from '../stores/authStore';
 import StatCard from '../shared/components/StatCard';
 import Card from '../shared/components/Card';
 import Button from '../shared/components/Button';
-import { classAPI } from '../services/api';
+import { classAPI, courseProgressAPI } from '../services/api';
 import { todosAPI } from '../features/todos';
+
+// Total topics per subject (based on MOCK_MODULES in SubjectDetails)
+const TOTAL_TOPICS_PER_SUBJECT = 8;
 
 const StudentDashboard = () => {
     const { user } = useAuthStore();
@@ -19,9 +22,12 @@ const StudentDashboard = () => {
     const [recentClasses, setRecentClasses] = useState([]);
     const [todos, setTodos] = useState([]);
     const [newTodo, setNewTodo] = useState('');
+    const [courseProgress, setCourseProgress] = useState([]);
+    const [progressLoading, setProgressLoading] = useState(true);
 
     useEffect(() => {
         fetchTodos();
+        fetchCourseProgress();
     }, []);
 
     const fetchTodos = async () => {
@@ -30,6 +36,18 @@ const StudentDashboard = () => {
             setTodos(data.todos || []);
         } catch (error) {
             console.error('Error loading todos:', error);
+        }
+    };
+
+    const fetchCourseProgress = async () => {
+        try {
+            setProgressLoading(true);
+            const data = await courseProgressAPI.getAllProgress();
+            setCourseProgress(data.progress || []);
+        } catch (error) {
+            console.error('Error loading course progress:', error);
+        } finally {
+            setProgressLoading(false);
         }
     };
 
@@ -242,8 +260,95 @@ const StudentDashboard = () => {
                     </div>
                 </Card>
 
-                {/* Welcome Section */}
+                {/* Course Progress Section */}
+                <Card className="w-full">
+                    <div className="mb-4 flex justify-between items-center">
+                        <div>
+                            <h3 className="text-xl font-semibold text-text-main">📊 Course Progress</h3>
+                            <p className="text-text-muted text-sm">Track your learning progress across subjects</p>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            onClick={() => navigate('/courses')}
+                            className="text-primary hover:bg-primary/10"
+                        >
+                            View All Courses →
+                        </Button>
+                    </div>
 
+                    {progressLoading ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-text-muted">
+                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2"></div>
+                            <p>Loading progress...</p>
+                        </div>
+                    ) : courseProgress.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                            <div className="text-4xl mb-2">📚</div>
+                            <h4 className="font-semibold mb-1 text-text-main">No course progress yet</h4>
+                            <p className="text-text-muted text-sm mb-4">
+                                Start learning and mark topics as complete to track your progress
+                            </p>
+                            <Button
+                                variant="primary"
+                                onClick={() => navigate('/courses')}
+                            >
+                                Browse Courses
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {courseProgress.map((course) => {
+                                const percentage = Math.round((course.completed_topics / TOTAL_TOPICS_PER_SUBJECT) * 100);
+                                const isComplete = percentage >= 100;
+                                return (
+                                    <div
+                                        key={course.subject_id}
+                                        onClick={() => navigate(`/courses/${course.subject_id}`)}
+                                        className={`p-4 rounded-xl border cursor-pointer transition-all hover:scale-[1.02] ${
+                                            isComplete
+                                                ? 'bg-success/10 border-success/30 hover:border-success'
+                                                : 'bg-bg-dark border-border hover:border-primary/50'
+                                        }`}
+                                    >
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-text-main text-sm line-clamp-1">
+                                                    {course.subject_name}
+                                                </h4>
+                                                <p className="text-xs text-text-muted font-mono">{course.subject_code}</p>
+                                            </div>
+                                            <div className={`text-2xl ${isComplete ? 'animate-bounce' : ''}`}>
+                                                {isComplete ? '🎉' : '📖'}
+                                            </div>
+                                        </div>
+
+                                        {/* Progress Bar */}
+                                        <div className="mb-2">
+                                            <div className="w-full bg-bg-panel h-2 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full transition-all duration-500 ${
+                                                        isComplete ? 'bg-success' : 'bg-primary'
+                                                    }`}
+                                                    style={{ width: `${Math.min(percentage, 100)}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+
+                                        {/* Progress Stats */}
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="text-text-muted">
+                                                {course.completed_topics}/{TOTAL_TOPICS_PER_SUBJECT} topics
+                                            </span>
+                                            <span className={`font-bold ${isComplete ? 'text-success' : 'text-primary'}`}>
+                                                {percentage}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </Card>
 
                 {/* Main Content Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

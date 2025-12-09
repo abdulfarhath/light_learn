@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import CourseCard from './CourseCard';
 import Button from '../../../shared/components/Button';
+import TranscriptModal from '../../../components/TranscriptModal';
+import { courseProgressAPI } from '../../../services/api';
 
 // MOCK DATA for modules and topics
 const MOCK_MODULES = [
@@ -33,6 +35,9 @@ const MOCK_MODULES = [
     }
 ];
 
+// Calculate total topics count
+const TOTAL_TOPICS = MOCK_MODULES.reduce((acc, m) => acc + m.topics.length, 0);
+
 const SubjectDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -42,10 +47,30 @@ const SubjectDetails = () => {
     const [activeTopic, setActiveTopic] = useState(MOCK_MODULES[0].topics[0]); // Currently playing topic
     const [completedTopics, setCompletedTopics] = useState(new Set()); // Set of completed topic IDs
     const [sidebarOpen, setSidebarOpen] = useState(true); // For mobile responsiveness
+    const [showTranscriptModal, setShowTranscriptModal] = useState(false); // Transcript modal state
+    const [saving, setSaving] = useState(false); // Loading state for saving progress
 
-    // Toggle topic completion
-    const toggleCompletion = (topicId, e) => {
+    // Load progress on mount
+    useEffect(() => {
+        const loadProgress = async () => {
+            try {
+                const data = await courseProgressAPI.getProgress(id);
+                if (data.completedTopics && data.completedTopics.length > 0) {
+                    setCompletedTopics(new Set(data.completedTopics));
+                }
+            } catch (error) {
+                console.error('Error loading progress:', error);
+                // Continue with empty progress if API fails
+            }
+        };
+        loadProgress();
+    }, [id]);
+
+    // Toggle topic completion with persistence
+    const toggleCompletion = async (topicId, e) => {
         e.stopPropagation();
+
+        // Optimistic update
         const newCompleted = new Set(completedTopics);
         if (newCompleted.has(topicId)) {
             newCompleted.delete(topicId);
@@ -53,6 +78,19 @@ const SubjectDetails = () => {
             newCompleted.add(topicId);
         }
         setCompletedTopics(newCompleted);
+
+        // Persist to backend
+        try {
+            setSaving(true);
+            await courseProgressAPI.toggleTopicCompletion(id, topicId);
+        } catch (error) {
+            console.error('Error saving progress:', error);
+            // Revert on failure
+            const revertedSet = new Set(completedTopics);
+            setCompletedTopics(revertedSet);
+        } finally {
+            setSaving(false);
+        }
     };
 
     // Handle topic selection
@@ -60,6 +98,9 @@ const SubjectDetails = () => {
         setActiveTopic(topic);
         // Auto-expand the module if needed (though usually it's already open if we clicked it)
     };
+
+    // Calculate progress percentage
+    const progressPercentage = Math.round((completedTopics.size / TOTAL_TOPICS) * 100);
 
     return (
         <div className="flex flex-col h-[calc(100vh-64px)] bg-bg-main overflow-hidden">
@@ -74,7 +115,10 @@ const SubjectDetails = () => {
                     </button>
                     <div>
                         <h1 className="text-xl font-bold text-text-main">Subject Name {id}</h1>
-                        <p className="text-sm text-text-secondary">Course Progress: {Math.round((completedTopics.size / 8) * 100)}%</p>
+                        <p className="text-sm text-text-secondary flex items-center gap-2">
+                            Course Progress: {progressPercentage}%
+                            {saving && <span className="text-xs text-primary">(Saving...)</span>}
+                        </p>
                     </div>
                 </div>
                 <button
@@ -137,13 +181,16 @@ const SubjectDetails = () => {
                                             <p className="text-xs text-text-secondary">PDF • 2.4 MB</p>
                                         </div>
                                     </CourseCard>
-                                    <CourseCard className="p-4 flex items-center gap-4 hover:bg-bg-hover cursor-pointer transition-colors">
+                                    <CourseCard
+                                        className="p-4 flex items-center gap-4 hover:bg-bg-hover cursor-pointer transition-colors"
+                                        onClick={() => setShowTranscriptModal(true)}
+                                    >
                                         <div className="p-3 bg-blue-500/10 text-blue-500 rounded-lg">
                                             📝
                                         </div>
                                         <div>
-                                            <p className="font-medium text-text-main">Transcript</p>
-                                            <p className="text-xs text-text-secondary">TXT • 15 KB</p>
+                                            <p className="font-medium text-text-main">Generate Transcript</p>
+                                            <p className="text-xs text-text-secondary">AI-Powered • Speech-to-Text</p>
                                         </div>
                                     </CourseCard>
                                 </div>
@@ -155,11 +202,14 @@ const SubjectDetails = () => {
                 {/* Right Side: Playlist Sidebar */}
                 <div className={`${sidebarOpen ? 'w-80 translate-x-0' : 'w-0 translate-x-full'} lg:translate-x-0 lg:w-96 bg-bg-panel border-l border-border transition-all duration-300 flex flex-col shrink-0 absolute lg:relative right-0 h-full z-20`}>
                     <div className="p-4 border-b border-border bg-bg-panel sticky top-0 z-10">
-                        <h3 className="font-bold text-text-main">Course Content</h3>
-                        <div className="mt-2 w-full bg-bg-dark h-2 rounded-full overflow-hidden">
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="font-bold text-text-main">Course Content</h3>
+                            <span className="text-xs text-text-secondary">{completedTopics.size}/{TOTAL_TOPICS} completed</span>
+                        </div>
+                        <div className="w-full bg-bg-dark h-2 rounded-full overflow-hidden">
                             <div
                                 className="bg-success h-full transition-all duration-500"
-                                style={{ width: `${(completedTopics.size / 8) * 100}%` }}
+                                style={{ width: `${progressPercentage}%` }}
                             ></div>
                         </div>
                     </div>
@@ -212,6 +262,13 @@ const SubjectDetails = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Transcript Modal */}
+            <TranscriptModal
+                isOpen={showTranscriptModal}
+                onClose={() => setShowTranscriptModal(false)}
+                topicTitle={activeTopic.title}
+            />
         </div>
     );
 };
