@@ -2,7 +2,7 @@ import axios from 'axios';
 import useAuthStore from '../../stores/authStore';
 
 // Create axios instance with base configuration
-const API_URL = 'http://localhost:3001/api';
+const API_URL = 'https://8eb2acee1ab2.ngrok-free.app/api';
 
 const api = axios.create({
     baseURL: API_URL,
@@ -77,6 +77,31 @@ export const userAPI = {
         const response = await api.get('/users/students');
         return response.data;
     },
+};
+
+// Lessons API endpoints
+export const lessonsAPI = {
+    uploadLesson: async (formData) => {
+        const response = await api.post('/lessons/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
+    
+    getLesson: async (id) => {
+        const response = await api.get(`/lessons/${id}`);
+        return response.data;
+    },
+    
+    getTeacherLessons: async () => {
+        const response = await api.get('/lessons/teacher/all');
+        return response.data;
+    },
+
+    getStudentLessons: async () => {
+        const response = await api.get('/lessons/student/all');
+        return response.data;
+    }
 };
 
 // Class API endpoints

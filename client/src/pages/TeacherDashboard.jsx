@@ -4,7 +4,7 @@ import useAuthStore from '../stores/authStore';
 import StatCard from '../shared/components/StatCard';
 import Card from '../shared/components/Card';
 import Button from '../shared/components/Button';
-import { classAPI } from '../services/api';
+import { classAPI, lessonsAPI } from '../services/api';
 import { todosAPI } from '../features/todos';
 
 const TeacherDashboard = () => {
@@ -20,6 +20,7 @@ const TeacherDashboard = () => {
     });
 
     const [recentClasses, setRecentClasses] = useState([]);
+    const [recentRecordings, setRecentRecordings] = useState([]);
     const [todos, setTodos] = useState([]);
     const [newTodo, setNewTodo] = useState('');
 
@@ -50,6 +51,14 @@ const TeacherDashboard = () => {
 
             setRecentClasses(classes.slice(0, 3));
 
+            // Fetch recordings
+            try {
+                const recordings = await lessonsAPI.getTeacherLessons();
+                setRecentRecordings(recordings.slice(0, 3));
+            } catch (err) {
+                console.error('Error fetching recordings:', err);
+            }
+
             const totalStudents = classes.reduce(
                 (sum, cls) => sum + parseInt(cls.student_count || 0),
                 0
@@ -61,6 +70,7 @@ const TeacherDashboard = () => {
                 activeSessions: 0,
                 resourcesShared: 0
             });
+
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         } finally {
@@ -85,9 +95,7 @@ const TeacherDashboard = () => {
     const toggleTodo = async (id) => {
         try {
             const data = await todosAPI.toggleTodo(id);
-            setTodos(
-                todos.map((todo) => (todo.id === id ? data.todo : todo))
-            );
+            setTodos(todos.map((todo) => (todo.id === id ? data.todo : todo)));
         } catch (error) {
             console.error('Error toggling todo:', error);
         }
@@ -113,6 +121,14 @@ const TeacherDashboard = () => {
             hoverBorder: 'hover:border-primary'
         },
         {
+            title: 'Record Lesson',
+            description: 'Create offline lesson with slides',
+            icon: '🎙️',
+            action: () => navigate('/record-lesson'),
+            color: 'secondary',
+            hoverBorder: 'hover:border-secondary'
+        },
+        {
             title: 'Create Class',
             description: 'Start a new class',
             icon: '➕',
@@ -135,7 +151,7 @@ const TeacherDashboard = () => {
 
             {/* Welcome Section */}
             <div className="bg-gradient-to-r from-primary to-accent p-10 rounded-2xl text-center text-white shadow-lg animate-slide-up relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]"></div>
+                <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]" />
                 <div className="relative z-10">
                     <p className="text-sm font-semibold opacity-90">
                         Welcome back, <span className="font-bold">{user?.full_name}</span>! 👋
@@ -145,39 +161,15 @@ const TeacherDashboard = () => {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
-                <StatCard
-                    title="Total Classes"
-                    value={stats.totalClasses}
-                    icon="🏫"
-                    color="primary"
-                    loading={loading}
-                />
-                <StatCard
-                    title="Total Students"
-                    value={stats.totalStudents}
-                    icon="👥"
-                    color="success"
-                    loading={loading}
-                />
-                <StatCard
-                    title="Active Sessions"
-                    value={stats.activeSessions}
-                    icon="📡"
-                    color="warning"
-                    loading={loading}
-                />
-                <StatCard
-                    title="Resources Shared"
-                    value={stats.resourcesShared}
-                    icon="📄"
-                    color="danger"
-                    loading={loading}
-                />
+                <StatCard title="Total Classes" value={stats.totalClasses} icon="🏫" color="primary" loading={loading} />
+                <StatCard title="Total Students" value={stats.totalStudents} icon="👥" color="success" loading={loading} />
+                <StatCard title="Active Sessions" value={stats.activeSessions} icon="📡" color="warning" loading={loading} />
+                <StatCard title="Resources Shared" value={stats.resourcesShared} icon="📄" color="danger" loading={loading} />
             </div>
 
-            {/* Main Content Grid */}
+            {/* Main Content */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
+
                 {/* Quick Actions */}
                 <Card className="lg:col-span-1 h-full">
                     <div className="mb-4">
@@ -222,9 +214,7 @@ const TeacherDashboard = () => {
                         <div className="flex flex-col items-center justify-center py-8 text-center">
                             <div className="text-4xl mb-2">📭</div>
                             <h4 className="font-semibold mb-1 text-text-main">No classes yet</h4>
-                            <p className="text-text-muted text-sm mb-4">
-                                Create your first class to get started
-                            </p>
+                            <p className="text-text-muted text-sm mb-4">Create your first class to get started</p>
                             <Button variant="primary" onClick={() => navigate('/classes')}>
                                 Create Class
                             </Button>
@@ -235,14 +225,18 @@ const TeacherDashboard = () => {
                                 <div
                                     key={cls.id}
                                     className="flex items-center justify-between p-4 bg-bg-dark border border-border rounded-xl cursor-pointer hover:bg-bg-hover hover:border-primary/30 transition-all group"
-                                    onClick={() => navigate(`/classes`)}
+                                    onClick={() => navigate(`/classes/${cls.id}`)}
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-xl text-primary">🎓</div>
                                         <div>
-                                            <h4 className="font-semibold text-text-main group-hover:text-primary transition-colors">{cls.class_name}</h4>
+                                            <h4 className="font-semibold text-text-main group-hover:text-primary transition-colors">
+                                                {cls.class_name}
+                                            </h4>
                                             <div className="flex gap-3 text-xs text-text-muted">
-                                                <span className="bg-bg-panel px-2 py-0.5 rounded border border-border font-mono">{cls.class_code}</span>
+                                                <span className="bg-bg-panel px-2 py-0.5 rounded border border-border font-mono">
+                                                    {cls.class_code}
+                                                </span>
                                                 <span>👥 {cls.student_count || 0} students</span>
                                             </div>
                                         </div>
@@ -251,11 +245,7 @@ const TeacherDashboard = () => {
                                 </div>
                             ))}
 
-                            <Button
-                                variant="ghost"
-                                onClick={() => navigate('/classes')}
-                                className="w-full mt-2 text-primary hover:bg-primary/10"
-                            >
+                            <Button variant="ghost" onClick={() => navigate('/classes')} className="w-full mt-2 text-primary hover:bg-primary/10">
                                 View All Classes →
                             </Button>
                         </div>
@@ -288,9 +278,7 @@ const TeacherDashboard = () => {
                         <div className="flex flex-col items-center justify-center py-8 text-center">
                             <div className="text-4xl mb-2">📝</div>
                             <h4 className="font-semibold mb-1 text-text-main">No tasks yet</h4>
-                            <p className="text-text-muted text-sm">
-                                Add your first task to get started
-                            </p>
+                            <p className="text-text-muted text-sm">Add your first task to get started</p>
                         </div>
                     ) : (
                         <div className="space-y-2 max-h-96 overflow-y-auto no-scrollbar">
@@ -298,9 +286,7 @@ const TeacherDashboard = () => {
                                 <div
                                     key={todo.id}
                                     className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                                        todo.completed
-                                            ? 'bg-success/5 border-success/20'
-                                            : 'bg-bg-dark border-border hover:border-primary/30'
+                                        todo.completed ? 'bg-success/5 border-success/20' : 'bg-bg-dark border-border hover:border-primary/30'
                                     }`}
                                 >
                                     <input
@@ -309,13 +295,7 @@ const TeacherDashboard = () => {
                                         onChange={() => toggleTodo(todo.id)}
                                         className="w-5 h-5 rounded border-border cursor-pointer accent-primary"
                                     />
-                                    <span
-                                        className={`flex-1 ${
-                                            todo.completed
-                                                ? 'text-text-muted line-through'
-                                                : 'text-text-main'
-                                        }`}
-                                    >
+                                    <span className={`flex-1 ${todo.completed ? 'text-text-muted line-through' : 'text-text-main'}`}>
                                         {todo.text}
                                     </span>
                                     <button
@@ -332,10 +312,8 @@ const TeacherDashboard = () => {
                     {todos.length > 0 && (
                         <div className="mt-3 pt-3 border-t border-border flex justify-between items-center text-sm text-text-muted">
                             <span>
-                                {todos.filter((t) => !t.completed).length} pending,{' '}
-                                {todos.filter((t) => t.completed).length} completed
+                                {todos.filter((t) => !t.completed).length} pending, {todos.filter((t) => t.completed).length} completed
                             </span>
-
                             {todos.some((t) => t.completed) && (
                                 <button
                                     onClick={() => setTodos(todos.filter((t) => !t.completed))}
@@ -346,6 +324,52 @@ const TeacherDashboard = () => {
                             )}
                         </div>
                     )}
+                </div>
+            </Card>
+
+            {/* Recent Recordings */}
+            <Card title="Recent Recordings" className="w-full">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-border">
+                                <th className="p-3 font-semibold text-text-muted">Title</th>
+                                <th className="p-3 font-semibold text-text-muted">Date</th>
+                                <th className="p-3 font-semibold text-text-muted">Duration</th>
+                                <th className="p-3 font-semibold text-text-muted">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {recentRecordings.length === 0 ? (
+                                <tr>
+                                    <td colSpan="4" className="p-4 text-center text-text-muted">
+                                        No recordings yet. Start recording a lesson!
+                                    </td>
+                                </tr>
+                            ) : (
+                                recentRecordings.map((rec) => (
+                                    <tr key={rec.id} className="border-b border-border hover:bg-bg-dark transition-colors">
+                                        <td className="p-3 font-medium text-text-main">{rec.title}</td>
+                                        <td className="p-3 text-text-muted">{new Date(rec.created_at).toLocaleDateString()}</td>
+                                        <td className="p-3 text-text-muted">
+                                            {rec.duration
+                                                ? new Date(rec.duration * 1000).toISOString().substr(11, 8)
+                                                : '00:00:00'}
+                                        </td>
+                                        <td className="p-3">
+                                            <Button
+                                                variant="secondary"
+                                                size="small"
+                                                onClick={() => navigate(`/lessons/${rec.id}`)}
+                                            >
+                                                Play
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </Card>
         </div>

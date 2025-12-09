@@ -11,14 +11,29 @@ class CoursesController {
                 return res.status(404).json({ error: 'User not found' });
             }
 
-            // If profile fields are missing, return all subjects without filtering
-            if (!user.year || !user.semester || !user.branch || !user.college) {
-                console.log('User profile incomplete, returning all subjects');
+            // TEACHER → return ALL subjects
+            if (user.role === 'teacher') {
                 const subjects = await coursesService.getAllSubjects();
                 return res.json({ subjects });
             }
 
-            // Normalize filters (fixes your empty subjects bug)
+            // STUDENT with missing profile fields → fallback to ALL subjects
+            if (!user.year || !user.semester || !user.branch || !user.college) {
+                console.warn(
+                    `User ${user.id} has incomplete profile. Returning all subjects as fallback.`
+                );
+                const subjects = await coursesService.getAllSubjects();
+                return res.json({ subjects });
+
+                /*
+                // Original strict behavior (commented intentionally)
+                return res.status(400).json({
+                    error: 'Incomplete profile. Please update your profile with year, semester, branch, and college.'
+                });
+                */
+            }
+
+            // Apply filters for fully profiled students
             const filters = {
                 year: Number(user.year),
                 semester: Number(user.semester),
@@ -26,7 +41,7 @@ class CoursesController {
                 college: String(user.college).trim().toLowerCase()
             };
 
-            console.log("FILTERS USED:", filters);
+            console.log('FILTERS USED:', filters);
 
             const subjects = await coursesService.getSubjectsByFilters(filters);
 
@@ -47,13 +62,19 @@ class CoursesController {
             }
 
             const subject = await coursesService.createSubject({
-                subject_name, subject_code, year, semester, branch, college
+                subject_name,
+                subject_code,
+                year,
+                semester,
+                branch,
+                college
             });
 
             res.status(201).json({ subject });
+
         } catch (error) {
             console.error('Create subject error:', error);
-            if (error.code === '23505') { // Unique violation
+            if (error.code === '23505') {
                 return res.status(400).json({ error: 'Subject code already exists for this context' });
             }
             res.status(500).json({ error: 'Server error' });
@@ -70,6 +91,7 @@ class CoursesController {
             }
 
             res.json({ subject });
+
         } catch (error) {
             console.error('Get subject error:', error);
             res.status(500).json({ error: 'Server error' });
@@ -88,6 +110,7 @@ class CoursesController {
             }
 
             res.json({ subject });
+
         } catch (error) {
             console.error('Update subject error:', error);
             if (error.code === '23505') {
@@ -102,6 +125,7 @@ class CoursesController {
             const { id } = req.params;
             await coursesService.deleteSubject(id);
             res.json({ message: 'Subject deleted successfully' });
+
         } catch (error) {
             console.error('Delete subject error:', error);
             res.status(500).json({ error: 'Server error' });

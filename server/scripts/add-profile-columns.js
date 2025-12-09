@@ -21,7 +21,11 @@ async function addProfileColumns() {
             ADD COLUMN IF NOT EXISTS profile_picture_url TEXT,
             ADD COLUMN IF NOT EXISTS total_points INTEGER DEFAULT 0,
             ADD COLUMN IF NOT EXISTS current_streak INTEGER DEFAULT 0,
-            ADD COLUMN IF NOT EXISTS last_activity_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+            ADD COLUMN IF NOT EXISTS last_activity_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            ADD COLUMN IF NOT EXISTS year INTEGER,
+            ADD COLUMN IF NOT EXISTS semester INTEGER,
+            ADD COLUMN IF NOT EXISTS branch VARCHAR(100),
+            ADD COLUMN IF NOT EXISTS college VARCHAR(255);
         `);
 
         console.log('✅ Users table updated with profile columns');
